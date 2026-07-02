@@ -240,24 +240,35 @@ async function enviarCompraPorCorreo({
         boletos,
         adjuntaPDFs
     });
-
     const respuesta = await resend.emails.send({
-        from,
-        to: [comprador.correo],
-        subject: `Tus boletos EXELARIS - ${evento.nombre}`,
-        html,
-        attachments
+    from,
+    to: [comprador.correo],
+    subject: `Tus boletos EXELARIS - ${evento.nombre}`,
+    html,
+    attachments
     });
 
-    console.log('📧 Correo enviado con Resend');
+    console.log('📧 Respuesta de Resend:');
     console.log(respuesta);
 
-    return {
-        enviado:true,
-        metodo: adjuntaPDFs ? 'adjuntos_y_links' : 'solo_links',
-        pesoAdjuntosMB: peso.totalMB,
-        resendId: respuesta?.data?.id || null
-    };
+    if(respuesta.error){
+
+        throw new Error(
+            respuesta.error.message ||
+            'Resend no pudo enviar el correo'
+        );
+
+}
+
+console.log('✅ Correo enviado con Resend');
+
+return {
+    enviado:true,
+    metodo: adjuntaPDFs ? 'adjuntos_y_links' : 'solo_links',
+    pesoAdjuntosMB: peso.totalMB,
+    resendId: respuesta?.data?.id || null
+};
+   
 }
 
 module.exports = enviarCompraPorCorreo;

@@ -354,13 +354,28 @@ async function confirmarCompra(){
 
         const data = await Api.comprarBoletos(payload);
 
-        resultado.style.display = "block";
-        resultado.innerHTML = `
-            Compra generada correctamente.<br>
-            Compra: ${data.compraId}<br>
-            Boletos: ${data.total}<br>
-            Correo: ${data.correo?.enviado ? "Enviado" : "No enviado"}
-        `;
+       const linksBoletos = data.boletos.map(boleto => `
+    <div style="margin-top:10px;">
+        <strong>${boleto.folio}</strong> - ${boleto.nombre}<br>
+        <a
+            href="${boleto.pdfUrl}"
+            target="_blank"
+            style="color:#065F46;text-decoration:underline;"
+        >
+            Abrir / descargar boleto PDF
+        </a>
+    </div>
+`).join('');
+
+resultado.style.display = "block";
+resultado.innerHTML = `
+    Compra generada correctamente.<br>
+    Compra: ${data.compraId}<br>
+    Boletos: ${data.total}<br>
+    Correo: ${data.correo?.enviado ? "Enviado" : "No enviado"}<br>
+    <br>
+    ${linksBoletos}
+`;
 
         resultado.scrollIntoView({
             behavior:"smooth",

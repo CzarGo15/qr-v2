@@ -249,8 +249,19 @@ async function enviarCompraPorCorreo({
         attachments
     });
 
-    console.log('📧 Correo enviado con Resend');
+    console.log('📧 Respuesta de Resend:');
     console.log(respuesta);
+
+    if(respuesta.error){
+
+        throw new Error(
+            respuesta.error.message ||
+            'Resend no pudo enviar el correo'
+        );
+
+    }
+
+    console.log('✅ Correo enviado con Resend');
 
     return {
         enviado:true,

@@ -2,6 +2,12 @@
 ====================================================
 EXELARIS Tickets v2.0
 Archivo: app.js
+Mejoras:
+- VIP 0 o 4-8.
+- General sin tope visual.
+- "Yo usaré el primer boleto".
+- Si es 1 boleto, se usa automáticamente el nombre del comprador.
+- Muestra enlaces de descarga PDF al terminar la compra.
 ====================================================
 */
 
@@ -14,6 +20,7 @@ const EstadoCompra = {
         correo:"",
         telefono:""
     },
+    yoSoyAsistente:true,
     asistentes:[]
 };
 
@@ -56,9 +63,11 @@ async function inicializarApp(){
     renderEvento(eventoActivo);
     inicializarContadores();
     inicializarFormularioComprador();
+    inicializarOpcionAsistente();
     inicializarCompra();
     actualizarResumen();
     renderAsistentes();
+
 }
 
 function renderEvento(evento){
@@ -172,7 +181,29 @@ function inicializarFormularioComprador(){
             EstadoCompra.comprador.correo = correo.value.trim();
             EstadoCompra.comprador.telefono = telefono.value.trim();
 
+            renderAsistentes();
+
         });
+
+    });
+
+}
+
+function inicializarOpcionAsistente(){
+
+    const checkbox = document.getElementById("yoSoyAsistente");
+
+    if(!checkbox){
+        return;
+    }
+
+    checkbox.checked = EstadoCompra.yoSoyAsistente;
+
+    checkbox.addEventListener("change",()=>{
+
+        EstadoCompra.yoSoyAsistente = checkbox.checked;
+
+        renderAsistentes();
 
     });
 
@@ -190,6 +221,22 @@ function inicializarCompra(){
 
 }
 
+function obtenerTiposSeleccionados(){
+
+    const tipos = [];
+
+    for(let i = 0; i < EstadoCompra.general; i++){
+        tipos.push("General");
+    }
+
+    for(let i = 0; i < EstadoCompra.vip; i++){
+        tipos.push("VIP");
+    }
+
+    return tipos;
+
+}
+
 function renderAsistentes(){
 
     const contenedor = document.getElementById("asistentesLista");
@@ -198,7 +245,8 @@ function renderAsistentes(){
         return;
     }
 
-    const total = EstadoCompra.general + EstadoCompra.vip;
+    const tipos = obtenerTiposSeleccionados();
+    const total = tipos.length;
 
     if(total === 0){
         contenedor.innerHTML = `
@@ -210,43 +258,66 @@ function renderAsistentes(){
         return;
     }
 
-    const nuevosAsistentes = [];
+    EstadoCompra.asistentes = tipos.map((tipo,index)=>{
 
-    for(let i = 0; i < EstadoCompra.general; i++){
-        nuevosAsistentes.push({
-            tipo:"General",
-            nombre: EstadoCompra.asistentes[i]?.nombre || ""
-        });
-    }
+        const anterior = EstadoCompra.asistentes[index] || {};
 
-    for(let i = 0; i < EstadoCompra.vip; i++){
-        const index = EstadoCompra.general + i;
-        nuevosAsistentes.push({
-            tipo:"VIP",
-            nombre: EstadoCompra.asistentes[index]?.nombre || ""
-        });
-    }
+        if(index === 0 && EstadoCompra.yoSoyAsistente){
+            return {
+                tipo,
+                nombre: EstadoCompra.comprador.nombre,
+                bloqueado:true
+            };
+        }
 
-    EstadoCompra.asistentes = nuevosAsistentes;
+        return {
+            tipo,
+            nombre: anterior.bloqueado ? "" : (anterior.nombre || ""),
+            bloqueado:false
+        };
+
+    });
 
     contenedor.innerHTML = "";
 
     EstadoCompra.asistentes.forEach((asistente,index)=>{
 
         const card = document.createElement("div");
-        card.className = "asistente-card";
+        card.className = asistente.bloqueado
+            ? "asistente-card locked"
+            : "asistente-card";
 
-        card.innerHTML = `
-            <div class="field">
-                <label>Boleto ${index + 1} - ${asistente.tipo}</label>
-                <input
-                    type="text"
-                    placeholder="Nombre del asistente"
-                    value="${asistente.nombre}"
-                    data-asistente-index="${index}"
-                >
-            </div>
-        `;
+        if(asistente.bloqueado){
+
+            card.innerHTML = `
+                <div class="field">
+                    <label>Boleto ${index + 1} - ${asistente.tipo}</label>
+                    <input
+                        type="text"
+                        value="${asistente.nombre || 'Se usará el nombre del comprador'}"
+                        disabled
+                    >
+                    <div class="asistente-note">
+                        Este boleto quedará a nombre del comprador.
+                    </div>
+                </div>
+            `;
+
+        }else{
+
+            card.innerHTML = `
+                <div class="field">
+                    <label>Boleto ${index + 1} - ${asistente.tipo}</label>
+                    <input
+                        type="text"
+                        placeholder="Nombre del asistente"
+                        value="${asistente.nombre || ''}"
+                        data-asistente-index="${index}"
+                    >
+                </div>
+            `;
+
+        }
 
         contenedor.appendChild(card);
 
@@ -333,6 +404,36 @@ function construirPayload(){
 
 }
 
+function generarLinksBoletosHTML(boletos){
+
+    if(!Array.isArray(boletos) || boletos.length === 0){
+        return "";
+    }
+
+    return boletos.map(boleto => `
+        <div style="
+            margin-top:14px;
+            padding:14px;
+            border-radius:14px;
+            background:#FFFFFF;
+            color:#064E3B;
+            border:1px solid #A7F3D0;
+        ">
+            <strong>${boleto.folio}</strong> - ${boleto.nombre}<br>
+            <span style="font-size:13px;">${boleto.tipo}</span><br>
+            <a
+                href="${boleto.pdfUrl}"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="display:inline-block;margin-top:8px;color:#047857;text-decoration:underline;font-weight:900;"
+            >
+                Abrir / descargar boleto PDF
+            </a>
+        </div>
+    `).join("");
+
+}
+
 async function confirmarCompra(){
 
     const error = validarCompra();
@@ -354,12 +455,16 @@ async function confirmarCompra(){
 
         const data = await Api.comprarBoletos(payload);
 
+        const linksBoletos = generarLinksBoletosHTML(data.boletos);
+
         resultado.style.display = "block";
         resultado.innerHTML = `
             Compra generada correctamente.<br>
             Compra: ${data.compraId}<br>
             Boletos: ${data.total}<br>
-            Correo: ${data.correo?.enviado ? "Enviado" : "No enviado"}
+            Correo: ${data.correo?.enviado ? "Enviado" : "No enviado"}<br>
+            <br>
+            ${linksBoletos}
         `;
 
         resultado.scrollIntoView({

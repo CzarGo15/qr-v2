@@ -48,6 +48,38 @@ Archivo: formulario.css
     box-shadow:0 0 0 4px rgba(124,58,237,.12);
 }
 
+.buyer-assistant-option{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    padding:18px;
+    border-radius:22px;
+    border:1px solid #DDD6FE;
+    background:#F5F3FF;
+    cursor:pointer;
+    margin-bottom:22px;
+}
+
+.buyer-assistant-option input{
+    width:20px;
+    height:20px;
+    margin-top:3px;
+    accent-color:#7C3AED;
+}
+
+.buyer-assistant-option span{
+    display:block;
+    font-weight:900;
+    color:#312E81;
+}
+
+.buyer-assistant-option small{
+    display:block;
+    margin-top:4px;
+    color:#64748B;
+    font-weight:600;
+}
+
 .asistentes-list{
     margin-top:28px;
     display:grid;
@@ -59,6 +91,18 @@ Archivo: formulario.css
     border-radius:24px;
     background:#F8FAFC;
     border:1px solid #E2E8F0;
+}
+
+.asistente-card.locked{
+    background:#ECFDF5;
+    border-color:#A7F3D0;
+}
+
+.asistente-note{
+    color:#047857;
+    font-weight:800;
+    font-size:13px;
+    margin-top:8px;
 }
 
 @media(max-width:900px){

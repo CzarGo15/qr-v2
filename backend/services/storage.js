@@ -1,14 +1,18 @@
+/*
+====================================================
+EXELARIS Tickets
+Archivo: backend/services/storage.js
+====================================================
+*/
+
 const { Storage } = require('@google-cloud/storage');
 const path = require('path');
 
 const storage = new Storage({
-
     credentials: JSON.parse(
         process.env.FIREBASE_SERVICE_ACCOUNT
     ),
-
     projectId: 'sistemaqr-a4d32'
-
 });
 
 const bucket = storage.bucket(
@@ -21,9 +25,9 @@ SUBIR PDF
 ==================================
 */
 
-async function subirPDF(rutaPDF, folio) {
+async function subirPDF(rutaPDF, folio){
 
-    try {
+    try{
 
         const nombreArchivo =
             `boletos/${folio}.pdf`;
@@ -31,8 +35,12 @@ async function subirPDF(rutaPDF, folio) {
         await bucket.upload(
             rutaPDF,
             {
-                destination: nombreArchivo,
-                resumable: false
+                destination:nombreArchivo,
+                resumable:false,
+                metadata:{
+                    contentType:'application/pdf',
+                    contentDisposition:`inline; filename="${folio}.pdf"`
+                }
             }
         );
 
@@ -41,16 +49,13 @@ async function subirPDF(rutaPDF, folio) {
 
         const [urlFirmada] =
             await file.getSignedUrl({
-
-                action: 'read',
-
-                expires: '01-01-2035'
-
+                action:'read',
+                expires:'01-01-2035'
             });
 
         return urlFirmada;
 
-    } catch (error) {
+    }catch(error){
 
         console.error(
             '❌ ERROR STORAGE PDF:',
@@ -72,13 +77,13 @@ SUBIR FLYER
 async function subirFlyer(
     rutaImagen,
     nombreOriginal
-) {
+){
 
-    try {
+    try{
 
         const extension =
             path.extname(
-                nombreOriginal
+                nombreOriginal || ''
             );
 
         const nombreArchivo =
@@ -87,8 +92,11 @@ async function subirFlyer(
         await bucket.upload(
             rutaImagen,
             {
-                destination: nombreArchivo,
-                resumable: false
+                destination:nombreArchivo,
+                resumable:false,
+                metadata:{
+                    contentType:'image/jpeg'
+                }
             }
         );
 
@@ -97,16 +105,13 @@ async function subirFlyer(
 
         const [urlFirmada] =
             await file.getSignedUrl({
-
-                action: 'read',
-
-                expires: '01-01-2035'
-
+                action:'read',
+                expires:'01-01-2035'
             });
 
         return urlFirmada;
 
-    } catch (error) {
+    }catch(error){
 
         console.error(
             '❌ ERROR STORAGE FLYER:',
@@ -118,6 +123,7 @@ async function subirFlyer(
     }
 
 }
+
 module.exports = {
     subirPDF,
     subirFlyer

@@ -2,6 +2,8 @@
 ====================================================
 EXELARIS Tickets v2.0
 Archivo: components.js
+Mejora:
+- Carga componentes en paralelo para reducir tiempo de carga.
 ====================================================
 */
 
@@ -16,6 +18,7 @@ const componentes = [
 ];
 
 async function cargarComponente(id,archivo){
+
     const response = await fetch(`components/${archivo}`);
 
     if(!response.ok){
@@ -25,13 +28,18 @@ async function cargarComponente(id,archivo){
     const html = await response.text();
 
     document.getElementById(id).innerHTML = html;
+
 }
 
 async function cargarComponentes(){
-    for(const componente of componentes){
-        await cargarComponente(
-            componente.id,
-            componente.archivo
-        );
-    }
+
+    await Promise.all(
+        componentes.map(componente =>
+            cargarComponente(
+                componente.id,
+                componente.archivo
+            )
+        )
+    );
+
 }

@@ -14,7 +14,7 @@ Componente: Resumen final
         </h2>
 
         <p class="section-subtitle mt-4">
-            Revisa tu información antes de generar tus boletos.
+            Revisa tu información antes de generar los boletos.
         </p>
 
         <div class="checkout-card">
@@ -34,12 +34,8 @@ Componente: Resumen final
                 <strong data-resumen-total>$0 MXN</strong>
             </div>
 
-            <p class="section-subtitle">
-                Por ahora esta acción genera la compra directamente. Cuando integremos Openpay, este botón enviará al pago seguro.
-            </p>
-
             <div class="checkout-actions">
-                <button id="btnContinuarPago" class="btn-primary" type="button">
+                <button class="btn-primary" data-accion-comprar>
                     Generar boletos
                 </button>
 
@@ -47,6 +43,8 @@ Componente: Resumen final
                     Modificar boletos
                 </a>
             </div>
+
+            <div id="resultadoCompra" class="resultado-compra"></div>
 
         </div>
 

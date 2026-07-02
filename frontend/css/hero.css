@@ -1,1 +1,194 @@
-.hero{min-height:100vh;position:relative;display:flex;align-items:center;overflow:hidden;background:#020617}.hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;transform:scale(1.04)}.hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(2,6,23,.94) 0%,rgba(2,6,23,.72) 42%,rgba(2,6,23,.30) 100%),linear-gradient(0deg,rgba(2,6,23,.92) 0%,rgba(2,6,23,.18) 50%,rgba(2,6,23,.62) 100%)}.hero-nav{position:absolute;z-index:5;top:0;left:0;width:100%;padding:24px 0}.hero-nav-inner{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:14px}.brand-mark{width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:16px;background:#fff;color:#111827;font-weight:900;font-size:22px}.brand-text strong{display:block;font-size:20px;letter-spacing:.03em}.brand-text span{display:block;font-size:11px;color:#CBD5E1;letter-spacing:.18em}.nav-links{display:flex;align-items:center;gap:28px}.nav-links a{color:#E5E7EB;text-decoration:none;font-size:14px;font-weight:600;transition:.2s}.nav-links a:hover{color:#fff}.hero-content{position:relative;z-index:2;padding-top:80px}.hero-badge{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:rgba(250,204,21,.12);border:1px solid rgba(250,204,21,.32);color:#FACC15;font-size:13px;font-weight:800;margin-bottom:22px}.hero-title{max-width:680px;font-size:clamp(3.2rem,8vw,7.2rem);line-height:.88;font-weight:900;letter-spacing:-.08em;text-transform:uppercase}.hero-title span{display:block;background:linear-gradient(135deg,#fff,#C4B5FD);-webkit-background-clip:text;color:transparent}.hero-meta{display:flex;flex-wrap:wrap;gap:14px;margin:28px 0 34px}.hero-meta-item{padding:12px 16px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid var(--ex-border);color:#E5E7EB;font-weight:600}.hero-actions{display:flex;flex-wrap:wrap;gap:14px}.hero-scroll{position:absolute;z-index:4;left:50%;bottom:24px;transform:translateX(-50%);color:#CBD5E1;font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.8}@media(max-width:768px){.hero{text-align:center;align-items:flex-end;padding-bottom:90px}.hero-bg::after{background:linear-gradient(0deg,rgba(2,6,23,.96) 0%,rgba(2,6,23,.70) 48%,rgba(2,6,23,.30) 100%)}.nav-links{display:none}.hero-title{margin:0 auto}.hero-meta,.hero-actions{justify-content:center}}
+/*
+====================================================
+EXELARIS Tickets v2.0
+Archivo: hero.css
+====================================================
+*/
+
+.hero{
+    min-height:100vh;
+    position:relative;
+    display:flex;
+    align-items:center;
+    overflow:hidden;
+    background:#020617;
+}
+
+.hero-bg{
+    position:absolute;
+    inset:0;
+    background-size:cover;
+    background-position:center;
+    transform:scale(1.04);
+}
+
+.hero-bg::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(90deg,rgba(2,6,23,.94) 0%,rgba(2,6,23,.72) 42%,rgba(2,6,23,.30) 100%),
+        linear-gradient(0deg,rgba(2,6,23,.92) 0%,rgba(2,6,23,.18) 50%,rgba(2,6,23,.62) 100%);
+}
+
+.hero-nav{
+    position:absolute;
+    z-index:5;
+    top:0;
+    left:0;
+    width:100%;
+    padding:24px 0;
+}
+
+.hero-nav-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.brand-mark{
+    width:46px;
+    height:46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:16px;
+    background:#fff;
+    color:#111827;
+    font-weight:900;
+    font-size:22px;
+}
+
+.brand-text strong{
+    display:block;
+    font-size:20px;
+    letter-spacing:.03em;
+}
+
+.brand-text span{
+    display:block;
+    font-size:11px;
+    color:#CBD5E1;
+    letter-spacing:.18em;
+}
+
+.nav-links{
+    display:flex;
+    align-items:center;
+    gap:28px;
+}
+
+.nav-links a{
+    color:#E5E7EB;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:600;
+    transition:.2s;
+}
+
+.nav-links a:hover{
+    color:#fff;
+}
+
+.hero-content{
+    position:relative;
+    z-index:2;
+    padding-top:80px;
+}
+
+.hero-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 16px;
+    border-radius:999px;
+    background:rgba(250,204,21,.12);
+    border:1px solid rgba(250,204,21,.32);
+    color:#FACC15;
+    font-size:13px;
+    font-weight:800;
+    margin-bottom:22px;
+}
+
+.hero-title{
+    max-width:720px;
+    font-size:clamp(3.2rem,8vw,7.2rem);
+    line-height:.88;
+    font-weight:900;
+    letter-spacing:-.08em;
+    text-transform:uppercase;
+}
+
+.hero-title span{
+    display:block;
+    background:linear-gradient(135deg,#fff,#C4B5FD);
+    -webkit-background-clip:text;
+    color:transparent;
+}
+
+.hero-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin:28px 0 34px;
+}
+
+.hero-meta-item{
+    padding:12px 16px;
+    border-radius:18px;
+    background:rgba(255,255,255,.08);
+    border:1px solid var(--ex-border);
+    color:#E5E7EB;
+    font-weight:600;
+}
+
+.hero-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+}
+
+.hero-scroll{
+    position:absolute;
+    z-index:4;
+    left:50%;
+    bottom:24px;
+    transform:translateX(-50%);
+    color:#CBD5E1;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    opacity:.8;
+}
+
+@media(max-width:768px){
+    .hero{
+        text-align:center;
+        align-items:flex-end;
+        padding-bottom:90px;
+    }
+
+    .hero-bg::after{
+        background:
+            linear-gradient(0deg,rgba(2,6,23,.96) 0%,rgba(2,6,23,.70) 48%,rgba(2,6,23,.30) 100%);
+    }
+
+    .nav-links{
+        display:none;
+    }
+
+    .hero-title{
+        margin:0 auto;
+    }
+
+    .hero-meta,
+    .hero-actions{
+        justify-content:center;
+    }
+}

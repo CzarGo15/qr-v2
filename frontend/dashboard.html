@@ -1,0 +1,489 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+EXELARIS Dashboard
+</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link
+href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap"
+rel="stylesheet">
+
+<style>
+
+*{
+font-family:'Montserrat',sans-serif;
+}
+
+body{
+background:
+linear-gradient(
+135deg,
+#020617,
+#111827,
+#312e81
+);
+min-height:100vh;
+}
+
+.glass{
+background:rgba(255,255,255,.06);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,.08);
+}
+
+.neon{
+text-shadow:
+0 0 5px #ff00ff,
+0 0 10px #ff00ff,
+0 0 20px #ff00ff;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container mx-auto p-4">
+
+<div class="text-center mb-8">
+
+<h1
+class="text-white text-5xl font-black neon">
+
+EXELARIS
+
+</h1>
+
+<p
+class="text-cyan-300 tracking-[6px]">
+
+DASHBOARD EVENTO
+
+</p>
+
+</div>
+
+<!-- TARJETAS -->
+
+<div
+class="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+<div class="glass rounded-3xl p-6">
+
+<p class="text-slate-300">
+Boletos
+</p>
+
+<h2
+id="total"
+class="text-white text-4xl font-black">
+
+0
+
+</h2>
+
+</div>
+
+<div class="glass rounded-3xl p-6">
+
+<p class="text-slate-300">
+VIP
+</p>
+
+<h2
+id="vip"
+class="text-yellow-300 text-4xl font-black">
+
+0
+
+</h2>
+
+</div>
+
+<div class="glass rounded-3xl p-6">
+
+<p class="text-slate-300">
+General
+</p>
+
+<h2
+id="general"
+class="text-cyan-300 text-4xl font-black">
+
+0
+
+</h2>
+
+</div>
+
+<div class="glass rounded-3xl p-6">
+
+<p class="text-slate-300">
+Usados
+</p>
+
+<h2
+id="usados"
+class="text-red-400 text-4xl font-black">
+
+0
+
+</h2>
+
+</div>
+
+<div class="glass rounded-3xl p-6">
+
+<p class="text-slate-300">
+Activos
+</p>
+
+<h2
+id="activos"
+class="text-green-400 text-4xl font-black">
+
+0
+
+</h2>
+
+</div>
+
+<div class="glass rounded-3xl p-6">
+
+<p class="text-slate-300">
+Ingresos
+</p>
+
+<h2
+id="ingresos"
+class="text-white text-3xl font-black">
+
+$0
+
+</h2>
+
+</div>
+
+</div>
+
+<!-- BUSCADOR -->
+
+<div
+class="glass rounded-3xl p-6 mt-8">
+
+<div class="flex gap-4">
+
+<input
+
+id="folioBuscar"
+
+type="text"
+
+placeholder="Buscar folio EXL-000001"
+
+class="
+flex-1
+p-4
+rounded-xl
+text-black">
+
+<button
+
+onclick="buscarBoleto()"
+
+class="
+bg-fuchsia-600
+px-8
+rounded-xl
+font-bold">
+
+BUSCAR
+
+</button>
+
+</div>
+
+<div
+id="resultadoBusqueda"
+class="mt-4">
+</div>
+
+</div>
+
+<!-- TABLA -->
+
+<div
+class="glass rounded-3xl p-6 mt-8 overflow-auto">
+
+<h2
+class="text-white text-3xl font-black mb-6">
+
+ASISTENTES
+
+</h2>
+
+<table
+class="w-full text-white">
+
+<thead>
+
+<tr
+class="border-b border-slate-700">
+
+<th class="p-3 text-left">
+Folio
+</th>
+
+<th class="p-3 text-left">
+Nombre
+</th>
+
+<th class="p-3 text-left">
+Tipo
+</th>
+
+<th class="p-3 text-left">
+Estado
+</th>
+
+<th class="p-3 text-left">
+Validador
+</th>
+
+</tr>
+
+</thead>
+
+<tbody
+id="tablaBoletos">
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+const API =
+'https://fiestaretro-api.onrender.com';
+
+async function cargarEstadisticas(){
+
+const respuesta =
+await fetch(
+`${API}/api/dashboard/estadisticas`
+);
+
+const data =
+await respuesta.json();
+
+if(!data.success) return;
+
+document.getElementById(
+'total'
+).innerHTML =
+data.estadisticas.total;
+
+document.getElementById(
+'vip'
+).innerHTML =
+data.estadisticas.vip;
+
+document.getElementById(
+'general'
+).innerHTML =
+data.estadisticas.general;
+
+document.getElementById(
+'usados'
+).innerHTML =
+data.estadisticas.usados;
+
+document.getElementById(
+'activos'
+).innerHTML =
+data.estadisticas.activos;
+
+document.getElementById(
+'ingresos'
+).innerHTML =
+'$' +
+data.estadisticas.ingresos;
+
+}
+
+async function cargarBoletos(){
+
+const respuesta =
+await fetch(
+`${API}/api/dashboard/boletos`
+);
+
+const data =
+await respuesta.json();
+
+if(!data.success) return;
+
+const tabla =
+document.getElementById(
+'tablaBoletos'
+);
+
+tabla.innerHTML = '';
+
+data.boletos.forEach(b=>{
+
+tabla.innerHTML += `
+
+<tr
+class="border-b border-slate-800">
+
+<td class="p-3">
+${b.folio}
+</td>
+
+<td class="p-3">
+${b.nombre}
+</td>
+
+<td class="p-3">
+${b.tipo}
+</td>
+
+<td class="p-3">
+
+<span
+class="
+px-3
+py-1
+rounded-full
+${b.estado === 'activo'
+? 'bg-green-500'
+: 'bg-red-500'}">
+
+${b.estado}
+
+</span>
+
+</td>
+
+<td class="p-3">
+${b.validadoPor || '-'}
+</td>
+
+</tr>
+
+`;
+
+});
+
+}
+
+async function buscarBoleto(){
+
+const folio =
+document.getElementById(
+'folioBuscar'
+).value;
+
+if(!folio) return;
+
+const respuesta =
+await fetch(
+`${API}/api/dashboard/buscar/${folio}`
+);
+
+const data =
+await respuesta.json();
+
+const div =
+document.getElementById(
+'resultadoBusqueda'
+);
+
+if(!data.success){
+
+div.innerHTML = `
+<p class="text-red-400">
+No encontrado
+</p>
+`;
+
+return;
+
+}
+
+div.innerHTML = `
+
+<div
+class="
+bg-slate-900
+rounded-2xl
+p-4
+text-white">
+
+<p>
+<strong>Nombre:</strong>
+${data.boleto.nombre}
+</p>
+
+<p>
+<strong>Correo:</strong>
+${data.boleto.correo}
+</p>
+
+<p>
+<strong>Tipo:</strong>
+${data.boleto.tipo}
+</p>
+
+<p>
+<strong>Estado:</strong>
+${data.boleto.estado}
+</p>
+
+</div>
+
+`;
+
+}
+
+async function iniciar(){
+
+await cargarEstadisticas();
+await cargarBoletos();
+
+}
+
+iniciar();
+
+setInterval(()=>{
+
+cargarEstadisticas();
+cargarBoletos();
+
+},15000);
+
+</script>
+
+</body>
+</html>
+```

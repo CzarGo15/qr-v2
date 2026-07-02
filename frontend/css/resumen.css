@@ -1,1 +1,40 @@
-.resumen-section{padding:90px 0;background:#020617}.checkout-card{margin-top:34px;padding:34px;border-radius:34px;border:1px solid var(--ex-border);background:radial-gradient(circle at top right,rgba(124,58,237,.20),transparent 32%),rgba(15,23,42,.88);box-shadow:0 24px 80px rgba(0,0,0,.28)}.checkout-actions{margin-top:26px;display:flex;gap:14px;flex-wrap:wrap}
+/*
+====================================================
+EXELARIS Tickets v2.0
+Archivo: resumen.css
+====================================================
+*/
+
+.resumen-section{
+    padding:90px 0;
+    background:#020617;
+}
+
+.checkout-card{
+    margin-top:34px;
+    padding:34px;
+    border-radius:34px;
+    border:1px solid var(--ex-border);
+    background:
+        radial-gradient(circle at top right,rgba(124,58,237,.20),transparent 32%),
+        rgba(15,23,42,.88);
+    box-shadow:0 24px 80px rgba(0,0,0,.28);
+}
+
+.checkout-actions{
+    margin-top:26px;
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+}
+
+.resultado-compra{
+    display:none;
+    margin-top:24px;
+    padding:18px;
+    border-radius:18px;
+    background:#ECFDF5;
+    color:#065F46;
+    font-weight:700;
+    line-height:1.6;
+}

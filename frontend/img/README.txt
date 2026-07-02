@@ -1,1 +1,1 @@
-Coloca aquí imágenes locales de respaldo, por ejemplo placeholder.jpg
+Aquí puedes colocar placeholder.jpg u otras imágenes locales.

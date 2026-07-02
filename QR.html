@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Escáner VIP Nube - Exelaris</title>
+    
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- LIBRERÍAS DE FIREBASE -->
+    <script type="module">
+        // Importamos Firebase directamente desde Google
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // =====================================================================
+        // ⚠️ CONFIGURACIÓN OFICIAL DE EXELARIS FIREBASE ⚠️
+        // =====================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEuH4iZDXxqSxHR9-hr1MjNQ-zaEOIBiw",
+            authDomain: "sistemaqr-a4d32.firebaseapp.com",
+            projectId: "sistemaqr-a4d32",
+            storageBucket: "sistemaqr-a4d32.firebasestorage.app",
+            messagingSenderId: "155568074854",
+            appId: "1:155568074854:web:db20fe57f935cbc1c5bda7",
+            measurementId: "G-VTZN06CCGG"
+        };
+
+        // Inicializamos Firebase y la Base de Datos
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Exponemos la base de datos al resto de nuestro código
+        window.db = db;
+        window.doc = doc;
+        window.getDoc = getDoc;
+        window.updateDoc = updateDoc;
+    </script>
+
+    <style>
+        body { background-color: #020617; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        #reader { width: 100%; border-radius: 1rem; overflow: hidden; position: relative; border: none !important; }
+        #reader video { object-fit: cover; }
+        .scan-laser { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background-color: #3b82f6; box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6; animation: scan 2.5s infinite ease-in-out; z-index: 10; display: none; }
+        @keyframes scan { 0% { top: 0; } 50% { top: calc(100% - 2px); } 100% { top: 0; } }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col items-center justify-between relative text-slate-100">
+
+    <!-- LOGIN -->
+    <div id="login-overlay" class="absolute inset-0 z-[60] bg-slate-950 flex flex-col items-center justify-center p-6 transition-opacity duration-300">
+        <div class="w-full max-w-sm glass-panel p-8 rounded-3xl border border-slate-700/50 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-600 rounded-full mix-blend-multiply filter blur-2xl opacity-20"></div>
+            <div class="text-center mb-8 relative z-10">
+                <img src="https://scontent.fmtt1-2.fna.fbcdn.net/v/t39.30808-6/417434020_303688476055215_1445176769765197732_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=F4aPJ1kx9TQQ7kNvwGWyR3a&_nc_oc=AdqgCYZRXQZ9MDOykXBbFCNTg43OLzi-V8AEgMnRzaHI_Ocurmk1xayr-FyZbKchkqo&_nc_zt=23&_nc_ht=scontent.fmtt1-2.fna&_nc_gid=AD8higQwxWAY6wrxJa-7oA&_nc_ss=7b2a8&oh=00_Af8N0SXnn2mAfsCnhhGfEZv_1EmUsGFlrzhwh67_v2HwrA&oe=6A250F7B" alt="Exelaris" class="w-24 h-24 mx-auto rounded-2xl mb-4 border-2 border-blue-500/30 object-cover shadow-lg">
+                <h2 class="text-2xl font-bold text-white">Exelaris Cloud</h2>
+                <p class="text-sm text-slate-400 mt-1">Conectando a servidor...</p>
+            </div>
+            <form id="login-form" class="space-y-4 relative z-10">
+                <div>
+                    <select id="input-operador" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-3 focus:outline-none focus:border-blue-500 appearance-none" required>
+                        <option value="" disabled selected>Selecciona un operador</option>
+                        <option value="Operador 1">Operador 1</option><option value="Operador 2">Operador 2</option>
+                    </select>
+                </div>
+                <div>
+                    <input type="password" id="input-pin" placeholder="PIN: 1234" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl p-3 text-center tracking-widest focus:outline-none focus:border-blue-500" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl shadow-lg mt-2">Iniciar Sesión</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ENCABEZADO -->
+    <header class="w-full max-w-md p-4 flex justify-between items-center glass-panel z-20 absolute top-0">
+        <div class="flex items-center gap-3">
+            <img src="https://scontent.fmtt1-2.fna.fbcdn.net/v/t39.30808-6/417434020_303688476055215_1445176769765197732_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=F4aPJ1kx9TQQ7kNvwGWyR3a&_nc_oc=AdqgCYZRXQZ9MDOykXBbFCNTg43OLzi-V8AEgMnRzaHI_Ocurmk1xayr-FyZbKchkqo&_nc_zt=23&_nc_ht=scontent.fmtt1-2.fna&_nc_gid=AD8higQwxWAY6wrxJa-7oA&_nc_ss=7b2a8&oh=00_Af8N0SXnn2mAfsCnhhGfEZv_1EmUsGFlrzhwh67_v2HwrA&oe=6A250F7B" class="w-10 h-10 rounded-full border border-slate-600">
+            <div>
+                <h1 class="font-bold text-sm text-emerald-400 flex items-center gap-1"><i class="ph-fill ph-wifi-high"></i> Conectado</h1>
+                <p class="text-xs text-slate-400" id="header-operator">Ninguno</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- ESCÁNER -->
+    <main class="flex-1 w-full flex flex-col items-center justify-center pt-24 pb-10 px-4 z-10">
+        <div id="start-button-container" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-30">
+            <button id="btn-start" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-8 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center gap-3">
+                <i class="ph-fill ph-camera text-2xl"></i> Activar Cámara
+            </button>
+        </div>
+        <div class="relative w-full max-w-sm rounded-2xl border-2 border-slate-700 overflow-hidden bg-black">
+            <div id="reader" class="h-[60vh] max-h-[450px]"></div>
+            <div id="laser" class="scan-laser"></div>
+        </div>
+    </main>
+
+    <!-- MODAL RESULTADO -->
+    <div id="resultado-overlay" class="absolute inset-0 z-50 bg-slate-950/95 flex flex-col items-center justify-center p-6 opacity-0 pointer-events-none transition-opacity duration-200">
+        <div id="card-resultado" class="bg-white rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl transform translate-y-10 transition-transform duration-300">
+            <div id="icono-resultado" class="text-6xl mb-4">⏳</div>
+            <h2 id="titulo-resultado" class="text-2xl font-black mb-2 text-slate-800">Verificando...</h2>
+            <p id="detalle-resultado" class="text-slate-500 mb-6 font-medium">Conectando a la base de datos.</p>
+            <button onclick="cerrarModal()" id="btn-continuar" class="w-full bg-slate-200 text-slate-500 font-bold py-3.5 rounded-xl mt-4 hidden">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // LÓGICA DE LOGIN (Igual que antes)
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (document.getElementById('input-pin').value === "1234") {
+                document.getElementById('header-operator').innerText = document.getElementById('input-operador').value;
+                document.getElementById('login-overlay').style.opacity = '0';
+                setTimeout(() => document.getElementById('login-overlay').classList.add('hidden'), 300);
+            }
+        });
+
+        // SINTETIZADOR DE AUDIO
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(isSuccess) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+            if (isSuccess) {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            } else {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
+            }
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        // CONTROL DEL ESCÁNER Y CONSULTA A FIREBASE
+        let html5QrCode;
+        let escaneoPausado = false;
+        
+        const overlay = document.getElementById('resultado-overlay');
+        const card = document.getElementById('card-resultado');
+        const titulo = document.getElementById('titulo-resultado');
+        const icono = document.getElementById('icono-resultado');
+        const detalle = document.getElementById('detalle-resultado');
+        const btnContinuar = document.getElementById('btn-continuar');
+
+        // Muestra estado de "cargando" mientras contacta la nube
+        function mostrarCargando() {
+            escaneoPausado = true;
+            html5QrCode.pause();
+            document.getElementById('laser').style.display = 'none';
+            
+            icono.innerText = '☁️';
+            titulo.innerText = 'Validando en Nube...';
+            titulo.className = 'text-2xl font-black mb-2 text-blue-600';
+            detalle.innerText = 'Por favor espera';
+            btnContinuar.classList.add('hidden');
+            
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            card.classList.remove('translate-y-10');
+        }
+
+        // Pinta el resultado final (Éxito o Error)
+        function pintarResultado(estado, msj1, msj2) {
+            btnContinuar.classList.remove('hidden');
+            if (estado === 'EXITO') {
+                playBeep(true);
+                icono.innerText = '✅';
+                titulo.innerText = msj1;
+                titulo.className = 'text-2xl font-black mb-2 text-emerald-600';
+                detalle.innerText = msj2;
+                btnContinuar.className = 'w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4';
+                btnContinuar.innerText = 'Siguiente Boleto';
+            } else {
+                playBeep(false);
+                icono.innerText = '🛑';
+                titulo.innerText = msj1;
+                titulo.className = 'text-2xl font-black mb-2 text-rose-600';
+                detalle.innerText = msj2;
+                btnContinuar.className = 'w-full bg-rose-500 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4';
+                btnContinuar.innerText = 'Bloquear / Cerrar';
+            }
+        }
+
+        function cerrarModal() {
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            card.classList.add('translate-y-10');
+            setTimeout(() => { 
+                escaneoPausado = false;
+                document.getElementById('laser').style.display = 'block';
+                if(html5QrCode.getState() === 3) html5QrCode.resume();
+            }, 300);
+        }
+
+        // === EL CEREBRO: CONSULTAR LA BASE DE DATOS REAL ===
+        async function onScanSuccess(decodedText) {
+            if (escaneoPausado) return;
+            mostrarCargando(); // Pausa cámara y muestra nube
+
+            try {
+                // 1. Busca el boleto en la colección "boletos" usando el código escaneado como ID
+                const docRef = window.doc(window.db, "boletos", decodedText);
+                const docSnap = await window.getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const datos = docSnap.data();
+                    
+                    // 2. ¿Ya fue usado?
+                    if (datos.estado === "usado") {
+                        pintarResultado('ERROR', '¡Boleto DUPLICADO!', `Este boleto ya fue escaneado a las: ${datos.hora_ingreso}`);
+                    } else {
+                        // 3. Es válido. Actualizamos la BD en tiempo real para "quemarlo"
+                        const horaActual = new Date().toLocaleTimeString();
+                        await window.updateDoc(docRef, {
+                            estado: "usado",
+                            hora_ingreso: horaActual
+                        });
+                        pintarResultado('EXITO', 'ACCESO PERMITIDO', `Boleto Válido. Tipo: ${datos.tipo || 'General'}`);
+                    }
+                } else {
+                    // El código leído no existe en nuestra base de datos
+                    pintarResultado('ERROR', 'Boleto FALSO', `El ID ${decodedText.substring(0,8)} no está registrado en el sistema.`);
+                }
+            } catch (error) {
+                console.error("Error contactando Firebase:", error);
+                pintarResultado('ERROR', 'Falla de Red', 'No se pudo conectar al servidor. Revisa tu internet.');
+            }
+        }
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-button-container').style.display = 'none';
+            document.getElementById('laser').style.display = 'block';
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 30, qrbox: { width: 250, height: 250 }, disableFlip: false },
+                onScanSuccess
+            ).catch(err => alert("Error de cámara."));
+        });
+    </script>
+</body>
+</html>

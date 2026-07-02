@@ -1,0 +1,10 @@
+node_modules/
+
+.env
+
+backend/pdfs/
+*.pdf
+
+.vscode/
+
+sistemaqr-a4d32-firebase-adminsdk-fbsvc-e5a2c6cb40.json

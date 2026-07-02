@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>EXELARIS Admin - Eventos</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    font-family:'Montserrat',sans-serif;
+}
+
+body{
+    background:#0f172a;
+}
+
+.sidebar{
+    background:#020617;
+}
+
+.card{
+    background:#111827;
+    border:1px solid #1e293b;
+    transition:.25s;
+}
+
+.card:hover{
+    transform:translateY(-4px);
+    border-color:#3b82f6;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="flex min-h-screen">
+
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar w-72 p-6">
+
+    <h1 class="text-white text-3xl font-black">
+        EXELARIS
+    </h1>
+
+    <p class="text-slate-400 mb-10">
+        Event Management
+    </p>
+
+    <nav class="space-y-3">
+
+        <a
+        href="dashboard.html"
+        class="block text-slate-300 hover:text-white">
+            Dashboard
+        </a>
+
+        <a
+        href="eventos.html"
+        class="block text-blue-400 font-bold">
+            Eventos
+        </a>
+
+        <a
+        href="../validar.html"
+        class="block text-slate-300 hover:text-white">
+            Validaciones
+        </a>
+
+    </nav>
+
+</aside>
+
+<!-- CONTENIDO -->
+
+<main class="flex-1 p-8">
+
+    <div class="flex justify-between items-center mb-8">
+
+        <div>
+
+            <h2 class="text-white text-4xl font-black">
+                Eventos
+            </h2>
+
+            <p class="text-slate-400">
+                Administración de eventos
+            </p>
+
+        </div>
+
+        <button
+        onclick="window.location.href='crear-evento.html'"
+        class="
+        bg-blue-600
+        hover:bg-blue-700
+        text-white
+        px-6
+        py-3
+        rounded-xl
+        font-bold">
+
+            + Crear Evento
+
+        </button>
+
+    </div>
+
+    <!-- EVENTOS -->
+
+    <div
+    id="eventosContainer"
+    class="
+    grid
+    md:grid-cols-2
+    xl:grid-cols-3
+    gap-6">
+
+    </div>
+
+</main>
+
+
+</div>
+
+<script>
+
+const API =
+'https://fiestaretro-api.onrender.com';
+
+async function cargarEventos(){
+
+    try{
+
+        const respuesta =
+        await fetch(
+            `${API}/api/eventos`
+        );
+
+        const eventos =
+        await respuesta.json();
+
+        const contenedor =
+        document.getElementById(
+            'eventosContainer'
+        );
+
+        contenedor.innerHTML = '';
+
+        eventos.forEach(evento=>{
+
+            contenedor.innerHTML += `
+
+            <div class="card rounded-3xl overflow-hidden">
+
+                <div class="relative">
+
+                    ${evento.flyer ?
+
+                    `
+                    <img
+                    src="${evento.flyer}"
+                    class="
+                    w-full
+                    h-56
+                    object-cover"
+                    alt="${evento.nombre}">
+
+                    <div
+                    class="
+                    absolute
+                    inset-0
+                    bg-gradient-to-t
+                    from-black
+                    via-black/20
+                    to-transparent">
+                    </div>
+
+                    <div
+                    class="
+                    absolute
+                    bottom-4
+                    left-4">
+
+                        <h3
+                        class="
+                        text-white
+                        text-2xl
+                        font-black">
+
+                            ${evento.nombre}
+
+                        </h3>
+
+                    </div>
+                    `
+
+                    :
+
+                    `
+                    <div
+                    class="
+                    h-56
+                    bg-gradient-to-r
+                    from-blue-600
+                    to-indigo-700
+                    flex
+                    items-center
+                    justify-center">
+
+                        <span
+                        class="
+                        text-white
+                        text-xl
+                        font-black">
+
+                            ${evento.nombre}
+
+                        </span>
+
+                    </div>
+                    `
+                    }
+
+                </div>
+
+                <div class="p-6">
+
+                    <h3
+                    class="
+                    text-white
+                    text-2xl
+                    font-bold">
+
+                        ${evento.nombre}
+
+                    </h3>
+
+                    <p
+                    class="
+                    text-slate-400
+                    mt-2">
+
+                        ${evento.descripcion || ''}
+
+                    </p>
+
+                    <div
+                    class="
+                    mt-4
+                    space-y-2
+                    text-slate-300">
+
+                        <p>
+                            📅 ${evento.fecha}
+                        </p>
+
+                        <p>
+                            🕒 ${evento.hora}
+                        </p>
+
+                        <p>
+                            📍 ${evento.lugar}
+                        </p>
+
+                        <p>
+                            🌎 ${evento.ciudad || ''}
+                        </p>
+
+                    </div>
+
+                    <div
+                    class="
+                    mt-5
+                    flex
+                    justify-between">
+
+                        <span
+                        class="
+                        text-yellow-400
+                        font-bold">
+
+                            VIP $${evento.precioVIP}
+
+                        </span>
+
+                        <span
+                        class="
+                        text-cyan-400
+                        font-bold">
+
+                            General $${evento.precioGeneral}
+
+                        </span>
+
+                    </div>
+
+                    <div class="mt-6 flex gap-2">
+
+<button
+onclick="editarEvento('${evento.id}')"
+class="
+flex-1
+bg-blue-600
+hover:bg-blue-700
+text-white
+py-2
+rounded-xl">
+
+    Editar
+
+</button>
+
+<button
+onclick="cambiarEstado(
+'${evento.id}',
+${evento.activo}
+)"
+class="
+flex-1
+${evento.activo
+    ? 'bg-green-600'
+    : 'bg-red-600'}
+text-white
+py-2
+rounded-xl">
+
+    ${evento.activo
+        ? 'Activo'
+        : 'Inactivo'}
+
+</button>
+
+</div>
+                       
+
+                </div>
+
+            </div>
+
+            `;
+
+        });
+
+    
+}catch(error){
+
+    console.error(error);
+
+}
+
+
+}
+
+cargarEventos();
+
+function editarEvento(id){
+
+    console.log(
+        'Editar:',
+        id
+    );
+
+    window.location.href =
+        `./editar-evento.html?id=${id}`;
+
+}
+
+async function cambiarEstado(
+    id,
+    activo
+){
+
+    try{
+
+        const respuesta =
+        await fetch(
+            `${API}/api/eventos/${id}`,
+            {
+                method:'PUT',
+                headers:{
+                    'Content-Type':'application/json'
+                },
+                body:JSON.stringify({
+                    activo: !activo
+                })
+            }
+        );
+
+        const data =
+        await respuesta.json();
+
+        if(data.success){
+
+            cargarEventos();
+
+        }
+
+    }catch(error){
+
+        console.error(error);
+
+        alert('Error al actualizar');
+
+    }
+
+}
+
+</script>
+</body>
+</html>

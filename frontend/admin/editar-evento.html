@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Editar Evento | EXELARIS</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+
+body{
+    background:#0f172a;
+}
+
+.card{
+    background:#111827;
+    border:1px solid #1e293b;
+}
+
+</style>
+
+</head>
+
+<body class="p-8">
+
+<div class="max-w-4xl mx-auto">
+
+```
+<h1 class="text-white text-4xl font-black mb-8">
+    Editar Evento
+</h1>
+
+<div class="card rounded-3xl p-8">
+
+    <div class="grid md:grid-cols-2 gap-6">
+
+        <input id="nombre" class="p-4 rounded-xl">
+        <input id="fecha" type="date" class="p-4 rounded-xl">
+
+        <input id="hora" type="time" class="p-4 rounded-xl">
+        <input id="lugar" class="p-4 rounded-xl">
+
+        <input id="direccion" class="p-4 rounded-xl">
+        <input id="ciudad" class="p-4 rounded-xl">
+
+        <input id="precioVIP" type="number" class="p-4 rounded-xl">
+        <input id="precioGeneral" type="number" class="p-4 rounded-xl">
+
+    </div>
+
+    <textarea
+    id="descripcion"
+    class="w-full p-4 rounded-xl mt-6 h-32"></textarea>
+
+    <div class="mt-6">
+
+        <img
+        id="previewFlyer"
+        class="w-full max-h-80 object-cover rounded-xl mb-4">
+
+        <input
+        type="file"
+        id="flyer"
+        accept="image/*"
+        class="text-white">
+
+    </div>
+
+    <button
+    onclick="guardarCambios()"
+    class="
+    mt-8
+    bg-blue-600
+    text-white
+    px-8
+    py-4
+    rounded-xl">
+
+        Guardar Cambios
+
+    </button>
+
+</div>
+```
+
+</div>
+
+<script>
+
+const API =
+'https://fiestaretro-api.onrender.com';
+
+const id =
+new URLSearchParams(
+window.location.search
+).get('id');
+
+let flyerActual = '';
+
+async function cargarEvento(){
+
+    const respuesta =
+    await fetch(
+        `${API}/api/eventos/${id}`
+    );
+
+    const evento =
+    await respuesta.json();
+
+    document.getElementById('nombre').value =
+    evento.nombre || '';
+
+    document.getElementById('descripcion').value =
+    evento.descripcion || '';
+
+    document.getElementById('fecha').value =
+    evento.fecha || '';
+
+    document.getElementById('hora').value =
+    evento.hora || '';
+
+    document.getElementById('lugar').value =
+    evento.lugar || '';
+
+    document.getElementById('direccion').value =
+    evento.direccion || '';
+
+    document.getElementById('ciudad').value =
+    evento.ciudad || '';
+
+    document.getElementById('precioVIP').value =
+    evento.precioVIP || '';
+
+    document.getElementById('precioGeneral').value =
+    evento.precioGeneral || '';
+
+    flyerActual =
+    evento.flyer || '';
+
+    if(flyerActual){
+
+        document.getElementById(
+            'previewFlyer'
+        ).src = flyerActual;
+
+    }
+
+}
+
+async function guardarCambios(){
+
+    let flyerURL =
+    flyerActual;
+
+    const archivo =
+    document.getElementById(
+        'flyer'
+    ).files[0];
+
+    if(archivo){
+
+        const formData =
+        new FormData();
+
+        formData.append(
+            'flyer',
+            archivo
+        );
+
+        const upload =
+        await fetch(
+            `${API}/api/upload/flyer`,
+            {
+                method:'POST',
+                body:formData
+            }
+        );
+
+        const uploadData =
+        await upload.json();
+
+        flyerURL =
+        uploadData.url;
+
+    }
+
+    const evento = {
+
+        nombre:
+        document.getElementById('nombre').value,
+
+        descripcion:
+        document.getElementById('descripcion').value,
+
+        fecha:
+        document.getElementById('fecha').value,
+
+        hora:
+        document.getElementById('hora').value,
+
+        lugar:
+        document.getElementById('lugar').value,
+
+        direccion:
+        document.getElementById('direccion').value,
+
+        ciudad:
+        document.getElementById('ciudad').value,
+
+        precioVIP:
+        Number(document.getElementById('precioVIP').value),
+
+        precioGeneral:
+        Number(document.getElementById('precioGeneral').value),
+
+        flyer:
+        flyerURL
+
+    };
+
+    const respuesta =
+    await fetch(
+        `${API}/api/eventos/${id}`,
+        {
+            method:'PUT',
+
+            headers:{
+                'Content-Type':
+                'application/json'
+            },
+
+            body:
+            JSON.stringify(evento)
+        }
+    );
+
+    const data =
+    await respuesta.json();
+
+    if(data.success){
+
+        alert('Evento actualizado');
+
+        window.location.href =
+        'eventos.html';
+
+    }
+
+}
+
+cargarEvento();
+
+</script>
+
+</body>
+</html>
+

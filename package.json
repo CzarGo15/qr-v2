@@ -1,0 +1,25 @@
+{
+  "name": "exelaris-ticket-system",
+  "version": "2.0.0",
+  "description": "Sistema de venta y validación de boletos EXELARIS",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
+    "axios": "^1.11.0",
+    "bwip-js": "^4.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.4.0",
+    "image-size": "^2.0.2",
+    "multer": "^2.0.2",
+    "nanoid": "3.3.7",
+    "pdfkit": "^0.17.1",
+    "qrcode": "^1.5.4",
+    "resend": "^4.6.0"
+  }
+}

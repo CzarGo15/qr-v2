@@ -1,1 +1,45 @@
-.footer{padding:50px 0;background:#020617;color:#94A3B8;border-top:1px solid rgba(255,255,255,.08)}.footer-inner{display:flex;justify-content:space-between;align-items:center;gap:20px}.footer strong{display:block;color:#fff;font-size:22px;font-weight:900}.footer-links{display:flex;gap:18px}.footer-links a{color:#CBD5E1;text-decoration:none;font-weight:600}@media(max-width:700px){.footer-inner{flex-direction:column;text-align:center}}
+/*
+====================================================
+EXELARIS Tickets v2.0
+Archivo: footer.css
+====================================================
+*/
+
+.footer{
+    padding:50px 0;
+    background:#020617;
+    color:#94A3B8;
+    border-top:1px solid rgba(255,255,255,.08);
+}
+
+.footer-inner{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+}
+
+.footer strong{
+    display:block;
+    color:#fff;
+    font-size:22px;
+    font-weight:900;
+}
+
+.footer-links{
+    display:flex;
+    gap:18px;
+}
+
+.footer-links a{
+    color:#CBD5E1;
+    text-decoration:none;
+    font-weight:600;
+}
+
+@media(max-width:700px){
+    .footer-inner{
+        flex-direction:column;
+        text-align:center;
+    }
+}

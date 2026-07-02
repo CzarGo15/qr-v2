@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Crear Evento | EXELARIS</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    font-family:'Montserrat',sans-serif;
+}
+
+body{
+    background:#0f172a;
+}
+
+.card{
+    background:#111827;
+    border:1px solid #1e293b;
+}
+
+</style>
+
+</head>
+
+<body class="p-8">
+
+<div class="max-w-4xl mx-auto">
+
+    <div class="flex justify-between items-center mb-8">
+
+        <div>
+
+            <h1 class="text-white text-4xl font-black">
+                Crear Evento
+            </h1>
+
+            <p class="text-slate-400">
+                Nuevo evento EXELARIS
+            </p>
+
+        </div>
+
+        <a
+        href="eventos.html"
+        class="bg-slate-700 text-white px-5 py-3 rounded-xl">
+
+            Regresar
+
+        </a>
+
+    </div>
+
+    <div class="card rounded-3xl p-8">
+
+        <div class="grid md:grid-cols-2 gap-6">
+
+            <input
+            id="nombre"
+            placeholder="Nombre del evento"
+            class="p-4 rounded-xl">
+
+            <input
+            id="fecha"
+            type="date"
+            class="p-4 rounded-xl">
+
+            <input
+            id="hora"
+            type="time"
+            class="p-4 rounded-xl">
+
+            <input
+            id="lugar"
+            placeholder="Lugar"
+            class="p-4 rounded-xl">
+
+            <input
+            id="direccion"
+            placeholder="Dirección"
+            class="p-4 rounded-xl">
+
+            <input
+            id="ciudad"
+            placeholder="Ciudad"
+            class="p-4 rounded-xl">
+
+            <input
+            id="precioVIP"
+            type="number"
+            placeholder="Precio VIP"
+            class="p-4 rounded-xl">
+
+            <input
+            id="precioGeneral"
+            type="number"
+            placeholder="Precio General"
+            class="p-4 rounded-xl">
+
+        </div>
+
+        <textarea
+        id="descripcion"
+        placeholder="Descripción"
+        class="
+        w-full
+        p-4
+        rounded-xl
+        mt-6
+        h-32"></textarea>
+
+        <div class="mt-6">
+
+            <label class="text-white block mb-2">
+
+                Flyer del evento
+
+            </label>
+
+            <input
+            id="flyer"
+            type="file"
+            accept="image/*"
+            class="text-white">
+
+        </div>
+
+        <div class="mt-8">
+
+            <button
+            onclick="guardarEvento()"
+            class="
+            bg-blue-600
+            hover:bg-blue-700
+            text-white
+            px-8
+            py-4
+            rounded-xl
+            font-bold">
+
+                Guardar Evento
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const API =
+'https://fiestaretro-api.onrender.com';
+
+async function guardarEvento(){
+
+    try{
+
+        const archivo =
+        document.getElementById(
+            'flyer'
+        ).files[0];
+
+        let flyerURL = '';
+
+        if(archivo){
+
+            const formData =
+            new FormData();
+
+            formData.append(
+                'flyer',
+                archivo
+            );
+
+            const upload =
+            await fetch(
+                `${API}/api/upload/flyer`,
+                {
+                    method:'POST',
+                    body:formData
+                }
+            );
+
+            const uploadData =
+            await upload.json();
+
+            if(!uploadData.success){
+
+                alert(
+                    'Error al subir flyer'
+                );
+
+                return;
+
+            }
+
+            flyerURL =
+            uploadData.url;
+
+        }
+
+        const evento = {
+
+            nombre:
+            document.getElementById(
+                'nombre'
+            ).value,
+
+            descripcion:
+            document.getElementById(
+                'descripcion'
+            ).value,
+
+            fecha:
+            document.getElementById(
+                'fecha'
+            ).value,
+
+            hora:
+            document.getElementById(
+                'hora'
+            ).value,
+
+            lugar:
+            document.getElementById(
+                'lugar'
+            ).value,
+
+            direccion:
+            document.getElementById(
+                'direccion'
+            ).value,
+
+            ciudad:
+            document.getElementById(
+                'ciudad'
+            ).value,
+
+            precioVIP:
+            Number(
+                document.getElementById(
+                    'precioVIP'
+                ).value
+            ),
+
+            precioGeneral:
+            Number(
+                document.getElementById(
+                    'precioGeneral'
+                ).value
+            ),
+
+            flyer:
+            flyerURL,
+
+            activo:true
+
+        };
+
+        const respuesta =
+        await fetch(
+            `${API}/api/eventos`,
+            {
+                method:'POST',
+
+                headers:{
+                    'Content-Type':
+                    'application/json'
+                },
+
+                body:
+                JSON.stringify(
+                    evento
+                )
+            }
+        );
+
+        const data =
+        await respuesta.json();
+
+        if(data.success){
+
+            alert(
+                'Evento creado'
+            );
+
+            window.location.href =
+            'eventos.html';
+
+        }else{
+
+            alert(
+                'Error al crear evento'
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(error);
+
+        alert(error.message);
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>

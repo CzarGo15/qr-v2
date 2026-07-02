@@ -1,1 +1,67 @@
-.evento-section{padding:90px 0;background:radial-gradient(circle at top right,rgba(124,58,237,.14),transparent 32%),#020617}.info-grid{margin-top:36px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.info-card{padding:26px;border-radius:28px;border:1px solid var(--ex-border);background:rgba(15,23,42,.72)}.info-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:16px;background:rgba(124,58,237,.14);color:#C4B5FD;font-weight:900;margin-bottom:18px}.info-card span{display:block;color:#94A3B8;font-size:13px;font-weight:700;margin-bottom:8px}.info-card strong{display:block;color:#fff;font-size:18px;line-height:1.25}@media(max-width:900px){.info-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.info-grid{grid-template-columns:1fr}}
+/*
+====================================================
+EXELARIS Tickets v2.0
+Archivo: evento.css
+====================================================
+*/
+
+.evento-section{
+    padding:90px 0;
+    background:
+        radial-gradient(circle at top right,rgba(124,58,237,.14),transparent 32%),
+        #020617;
+}
+
+.info-grid{
+    margin-top:36px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+}
+
+.info-card{
+    padding:26px;
+    border-radius:28px;
+    border:1px solid var(--ex-border);
+    background:rgba(15,23,42,.72);
+}
+
+.info-icon{
+    width:42px;
+    height:42px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:16px;
+    background:rgba(124,58,237,.14);
+    color:#C4B5FD;
+    font-weight:900;
+    margin-bottom:18px;
+}
+
+.info-card span{
+    display:block;
+    color:#94A3B8;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:8px;
+}
+
+.info-card strong{
+    display:block;
+    color:#fff;
+    font-size:18px;
+    line-height:1.25;
+}
+
+@media(max-width:900px){
+    .info-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:560px){
+    .info-grid{
+        grid-template-columns:1fr;
+    }
+}

@@ -1,15 +1,3 @@
-/*
-====================================================
-EXELARIS Tickets
-Archivo: backend/services/email.js
-
-Resend:
-- 1 correo por compra
-- Links de descarga siempre
-- Adjuntos solo si el peso total <= EMAIL_MAX_ATTACHMENTS_MB
-====================================================
-*/
-
 const fs = require('fs');
 const path = require('path');
 
@@ -240,13 +228,12 @@ async function enviarCompraPorCorreo({
         boletos,
         adjuntaPDFs
     });
-
     const respuesta = await resend.emails.send({
-        from,
-        to: [comprador.correo],
-        subject: `Tus boletos EXELARIS - ${evento.nombre}`,
-        html,
-        attachments
+    from,
+    to: [comprador.correo],
+    subject: `Tus boletos EXELARIS - ${evento.nombre}`,
+    html,
+    attachments
     });
 
     console.log('📧 Respuesta de Resend:');
@@ -259,6 +246,7 @@ async function enviarCompraPorCorreo({
             'Resend no pudo enviar el correo'
         );
 
+<<<<<<< HEAD
     }
 
     console.log('✅ Correo enviado con Resend');
@@ -269,6 +257,19 @@ async function enviarCompraPorCorreo({
         pesoAdjuntosMB: peso.totalMB,
         resendId: respuesta?.data?.id || null
     };
+=======
+}
+
+console.log('✅ Correo enviado con Resend');
+
+return {
+    enviado:true,
+    metodo: adjuntaPDFs ? 'adjuntos_y_links' : 'solo_links',
+    pesoAdjuntosMB: peso.totalMB,
+    resendId: respuesta?.data?.id || null
+};
+   
+>>>>>>> 4560f1ac930ea18c2ee4157ea93d8b0d47a89a46
 }
 
 module.exports = enviarCompraPorCorreo;

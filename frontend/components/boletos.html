@@ -1,1 +1,96 @@
-<div class="boletos-section"><div class="container-ex"><h2 class="section-title">Elige tus boletos</h2><p class="section-subtitle mt-4 text-slate-600">Selecciona la cantidad de boletos General y VIP que deseas comprar.</p><div class="ticket-grid"><div class="ticket-options"><div class="ticket-card"><div class="ticket-card-top"><div><div class="ticket-type">General</div><p class="ticket-desc">Acceso general al evento.</p></div><div class="ticket-price" data-precio-general>$0 MXN</div></div><div class="ticket-counter" data-ticket-control="general"><span class="text-slate-500 font-bold">Cantidad</span><div class="counter-control"><button class="counter-btn" data-minus>-</button><span class="counter-value" data-value>0</span><button class="counter-btn" data-plus>+</button></div></div></div><div class="ticket-card"><div class="ticket-card-top"><div><div class="ticket-type">VIP</div><p class="ticket-desc">Acceso preferente y beneficios VIP.</p></div><div class="ticket-price" data-precio-vip>$0 MXN</div></div><div class="ticket-counter" data-ticket-control="vip"><span class="text-slate-500 font-bold">Cantidad</span><div class="counter-control"><button class="counter-btn" data-minus>-</button><span class="counter-value" data-value>0</span><button class="counter-btn" data-plus>+</button></div></div></div></div><aside class="summary-card"><h3>Tu compra</h3><div class="summary-row"><span>General</span><strong data-resumen-general>0</strong></div><div class="summary-row"><span>VIP</span><strong data-resumen-vip>0</strong></div><div class="summary-total"><span>Total</span><strong data-resumen-total>$0 MXN</strong></div><a href="#comprador" class="btn-primary w-full">Continuar</a></aside></div></div></div>
+<!--
+====================================================
+EXELARIS Tickets v2.0
+Componente: Selector de boletos
+Actualización: VIP mínimo 4 y máximo 8
+====================================================
+-->
+
+<div class="boletos-section">
+
+    <div class="container-ex">
+
+        <h2 class="section-title">
+            Elige tus boletos
+        </h2>
+
+        <p class="section-subtitle mt-4 text-slate-600">
+            Selecciona tus boletos. VIP se vende por mesa reservada de 4 a 8 personas.
+        </p>
+
+        <div class="ticket-grid">
+
+            <div class="ticket-options">
+
+                <div class="ticket-card">
+                    <div class="ticket-card-top">
+                        <div>
+                            <div class="ticket-type">General</div>
+                            <p class="ticket-desc">Acceso general al evento. Puedes comprar desde 1 boleto.</p>
+                        </div>
+                        <div class="ticket-price" data-precio-general>$0 MXN</div>
+                    </div>
+
+                    <div class="ticket-counter" data-ticket-control="general">
+                        <span class="text-slate-500 font-bold">Cantidad</span>
+                        <div class="counter-control">
+                            <button class="counter-btn" data-minus type="button">-</button>
+                            <span class="counter-value" data-value>0</span>
+                            <button class="counter-btn" data-plus type="button">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ticket-card">
+                    <div class="ticket-card-top">
+                        <div>
+                            <div class="ticket-type">VIP Mesa Reservada</div>
+                            <p class="ticket-desc">Mesa reservada. Mínimo 4 y máximo 8 boletos por compra VIP.</p>
+                        </div>
+                        <div class="ticket-price" data-precio-vip>$0 MXN</div>
+                    </div>
+
+                    <div class="ticket-counter" data-ticket-control="vip">
+                        <span class="text-slate-500 font-bold">Cantidad</span>
+                        <div class="counter-control">
+                            <button class="counter-btn" data-minus type="button">-</button>
+                            <span class="counter-value" data-value>0</span>
+                            <button class="counter-btn" data-plus type="button">+</button>
+                        </div>
+                    </div>
+
+                    <p class="mt-4 text-sm font-semibold text-purple-700">
+                        Regla VIP: 0 o de 4 a 8 boletos.
+                    </p>
+                </div>
+
+            </div>
+
+            <aside class="summary-card">
+                <h3>Tu compra</h3>
+
+                <div class="summary-row">
+                    <span>General</span>
+                    <strong data-resumen-general>0</strong>
+                </div>
+
+                <div class="summary-row">
+                    <span>VIP</span>
+                    <strong data-resumen-vip>0</strong>
+                </div>
+
+                <div class="summary-total">
+                    <span>Total</span>
+                    <strong data-resumen-total>$0 MXN</strong>
+                </div>
+
+                <a href="#comprador" class="btn-primary w-full">
+                    Continuar
+                </a>
+            </aside>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,1 +1,55 @@
-<div class="resumen-section"><div class="container-ex"><h2 class="section-title">Confirmar compra</h2><p class="section-subtitle mt-4">Revisa tu información antes de continuar al pago.</p><div class="checkout-card"><div class="summary-row"><span>Boletos General</span><strong data-resumen-general>0</strong></div><div class="summary-row"><span>Boletos VIP</span><strong data-resumen-vip>0</strong></div><div class="summary-total"><span>Total</span><strong data-resumen-total>$0 MXN</strong></div><div class="checkout-actions"><button class="btn-primary">Continuar a pago</button><a href="#boletos" class="btn-secondary">Modificar boletos</a></div></div></div></div>
+<!--
+====================================================
+EXELARIS Tickets v2.0
+Componente: Resumen final
+====================================================
+-->
+
+<div class="resumen-section">
+
+    <div class="container-ex">
+
+        <h2 class="section-title">
+            Confirmar compra
+        </h2>
+
+        <p class="section-subtitle mt-4">
+            Revisa tu información antes de generar tus boletos.
+        </p>
+
+        <div class="checkout-card">
+
+            <div class="summary-row">
+                <span>Boletos General</span>
+                <strong data-resumen-general>0</strong>
+            </div>
+
+            <div class="summary-row">
+                <span>Boletos VIP</span>
+                <strong data-resumen-vip>0</strong>
+            </div>
+
+            <div class="summary-total">
+                <span>Total</span>
+                <strong data-resumen-total>$0 MXN</strong>
+            </div>
+
+            <p class="section-subtitle">
+                Por ahora esta acción genera la compra directamente. Cuando integremos Openpay, este botón enviará al pago seguro.
+            </p>
+
+            <div class="checkout-actions">
+                <button id="btnContinuarPago" class="btn-primary" type="button">
+                    Generar boletos
+                </button>
+
+                <a href="#boletos" class="btn-secondary">
+                    Modificar boletos
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

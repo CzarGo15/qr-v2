@@ -1,7 +1,6 @@
 {
   "name": "exelaris-ticket-system",
   "version": "2.0.0",
-  "description": "Sistema de venta y validación de boletos EXELARIS",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",

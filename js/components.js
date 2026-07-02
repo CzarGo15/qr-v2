@@ -1,0 +1,3 @@
+const componentes=[{id:"hero",archivo:"hero.html"},{id:"evento",archivo:"evento.html"},{id:"boletos",archivo:"boletos.html"},{id:"comprador",archivo:"comprador.html"},{id:"asistentes",archivo:"asistentes.html"},{id:"resumen",archivo:"resumen.html"},{id:"footer",archivo:"footer.html"}];
+async function cargarComponente(id,archivo){const response=await fetch(`components/${archivo}`);if(!response.ok){throw new Error(`No se pudo cargar ${archivo}`);}document.getElementById(id).innerHTML=await response.text();}
+async function cargarComponentes(){for(const componente of componentes){await cargarComponente(componente.id,componente.archivo);}}

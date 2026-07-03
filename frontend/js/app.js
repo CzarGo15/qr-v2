@@ -1,3 +1,16 @@
+/*
+====================================================
+EXELARIS Tickets v2.0
+Archivo: app.js
+Mejoras:
+- VIP 0 o 4-8.
+- General sin tope visual.
+- "Yo usaré el primer boleto".
+- Si es 1 boleto, se usa automáticamente el nombre del comprador.
+- Muestra enlaces de descarga PDF al terminar la compra.
+====================================================
+*/
+
 const EstadoCompra = {
     evento:null,
     general:0,
@@ -442,7 +455,6 @@ async function confirmarCompra(){
 
         const data = await Api.comprarBoletos(payload);
 
-<<<<<<< HEAD
         const linksBoletos = generarLinksBoletosHTML(data.boletos);
 
         resultado.style.display = "block";
@@ -454,30 +466,6 @@ async function confirmarCompra(){
             <br>
             ${linksBoletos}
         `;
-=======
-       const linksBoletos = data.boletos.map(boleto => `
-    <div style="margin-top:10px;">
-        <strong>${boleto.folio}</strong> - ${boleto.nombre}<br>
-        <a
-            href="${boleto.pdfUrl}"
-            target="_blank"
-            style="color:#065F46;text-decoration:underline;"
-        >
-            Abrir / descargar boleto PDF
-        </a>
-    </div>
-`).join('');
-
-resultado.style.display = "block";
-resultado.innerHTML = `
-    Compra generada correctamente.<br>
-    Compra: ${data.compraId}<br>
-    Boletos: ${data.total}<br>
-    Correo: ${data.correo?.enviado ? "Enviado" : "No enviado"}<br>
-    <br>
-    ${linksBoletos}
-`;
->>>>>>> 4560f1ac930ea18c2ee4157ea93d8b0d47a89a46
 
         resultado.scrollIntoView({
             behavior:"smooth",

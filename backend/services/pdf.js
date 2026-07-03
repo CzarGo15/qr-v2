@@ -2,20 +2,13 @@
 ====================================================
 EXELARIS Tickets
 Archivo: backend/services/pdf.js
-Versión: Premium Final
+Versión: Premium Pro
 
-Diseño:
-- Boleto vertical premium tipo ticket digital.
+Diseño profesional para boleto digital:
 - Header con flyer tipo cover.
-- Notches laterales estilo boleto.
-- Información del evento con iconos dibujados.
-- Titular, folio, precio, QR, Code128 y footer profesional.
-
-Compatible con:
-- Node.js + Express
-- PDFKit
-- Firebase Storage
-- Resend
+- Iconos vectoriales estilo FontAwesome/Lucide sin fuentes externas.
+- Compatible con PDFKit, Firebase Storage y Resend.
+- Sin emojis ni caracteres especiales que rompan el PDF.
 ====================================================
 */
 
@@ -34,29 +27,29 @@ CONFIGURACIÓN
 
 const PAGE = {
     width: 430,
-    height: 1180
+    height: 1120
 };
 
 const TICKET = {
     x: 24,
-    y: 22,
-    width: PAGE.width - 48,
-    height: PAGE.height - 44,
+    y: 20,
+    width: 382,
+    height: 1080,
     radius: 24
 };
 
 const COLORS = {
     pageBg: '#F3F4F6',
     white: '#FFFFFF',
-    black: '#0B1020',
-    black2: '#111827',
+    black: '#111827',
     navy: '#020617',
-    text: '#111827',
-    muted: '#64748B',
-    muted2: '#475569',
-    line: '#E5E7EB',
-    line2: '#CBD5E1',
-    soft: '#F8FAFC',
+    gray900: '#0F172A',
+    gray700: '#334155',
+    gray600: '#475569',
+    gray500: '#64748B',
+    gray300: '#CBD5E1',
+    gray200: '#E5E7EB',
+    gray100: '#F8FAFC',
     purple: '#6D28D9',
     purple2: '#7C3AED',
     purpleSoft: '#F5F3FF',
@@ -81,36 +74,36 @@ function safeText(value, fallback = ''){
     return String(value);
 }
 
-function truncate(text, max){
-    const value = safeText(text);
+function truncate(value, max){
+    const text = safeText(value);
 
-    if(value.length <= max){
-        return value;
+    if(text.length <= max){
+        return text;
     }
 
-    return value.substring(0, max - 1) + '…';
+    return text.substring(0, max - 1) + '…';
 }
 
-function esVIP(tipo){
+function isVIP(tipo){
     return safeText(tipo).toUpperCase() === 'VIP';
 }
 
-function tipoColor(tipo){
-    return esVIP(tipo) ? COLORS.gold : COLORS.blue;
+function ticketType(tipo){
+    return isVIP(tipo) ? 'VIP' : 'General';
 }
 
-function tipoTextColor(tipo){
-    return esVIP(tipo) ? COLORS.black2 : COLORS.white;
+function ticketColor(tipo){
+    return isVIP(tipo) ? COLORS.gold : COLORS.blue;
+}
+
+function ticketTextColor(tipo){
+    return isVIP(tipo) ? COLORS.black : COLORS.white;
 }
 
 function precioMX(valor){
     const numero = Number(valor || 0);
 
-    return numero.toLocaleString('es-MX', {
-        style: 'currency',
-        currency: 'MXN',
-        maximumFractionDigits: 0
-    });
+    return `$${numero.toLocaleString('es-MX')} MXN`;
 }
 
 function fechaMX(fecha){
@@ -121,6 +114,9 @@ function fechaMX(fecha){
     try{
         const valor = String(fecha);
 
+        /*
+        Evita desfase de día por zona horaria cuando la fecha viene como YYYY-MM-DD.
+        */
         if(/^\d{4}-\d{2}-\d{2}$/.test(valor)){
             const [year, month, day] = valor.split('-').map(Number);
 
@@ -144,27 +140,27 @@ function fechaMX(fecha){
     }
 }
 
-function limpiarBase64QR(qr){
+function limpiarQR(qr){
     return safeText(qr).replace(/^data:image\/png;base64,/, '');
 }
 
 /*
 ====================================================
-DIBUJO GENERAL
+BASE VISUAL
 ====================================================
 */
 
-function drawShadow(doc, x, y, width, height, radius = 18, opacity = 0.08){
+function shadow(doc, x, y, width, height, radius = 16, opacity = 0.08){
     doc.save();
     doc.opacity(opacity);
     doc.fillColor('#000000');
-    doc.roundedRect(x, y + 7, width, height, radius).fill();
+    doc.roundedRect(x, y + 6, width, height, radius).fill();
     doc.restore();
 }
 
-function drawCard(doc, x, y, width, height, radius = 18, fill = COLORS.white, shadow = true){
-    if(shadow){
-        drawShadow(doc, x, y, width, height, radius, 0.06);
+function card(doc, x, y, width, height, radius = 16, fill = COLORS.white, useShadow = true){
+    if(useShadow){
+        shadow(doc, x, y, width, height, radius, 0.055);
     }
 
     doc.save();
@@ -173,7 +169,7 @@ function drawCard(doc, x, y, width, height, radius = 18, fill = COLORS.white, sh
     doc.restore();
 }
 
-function drawLine(doc, x1, y, x2, color = COLORS.line, width = 0.8){
+function line(doc, x1, y, x2, color = COLORS.gray200, width = 0.8){
     doc.save();
     doc.strokeColor(color);
     doc.lineWidth(width);
@@ -181,9 +177,9 @@ function drawLine(doc, x1, y, x2, color = COLORS.line, width = 0.8){
     doc.restore();
 }
 
-function drawDottedLine(doc, x, y, width){
+function dottedLine(doc, x, y, width){
     doc.save();
-    doc.strokeColor(COLORS.line2);
+    doc.strokeColor(COLORS.gray300);
     doc.lineWidth(1);
     doc.dash(4, { space: 5 });
     doc.moveTo(x, y).lineTo(x + width, y).stroke();
@@ -191,11 +187,10 @@ function drawDottedLine(doc, x, y, width){
     doc.restore();
 }
 
-function drawPill(doc, text, x, y, width, height, bg, color, fontSize = 11){
+function pill(doc, text, x, y, width, height, bg, color, fontSize = 10){
     doc.save();
-
-    doc.roundedRect(x, y, width, height, height / 2)
-        .fill(bg);
+    doc.fillColor(bg);
+    doc.roundedRect(x, y, width, height, height / 2).fill();
 
     doc.fillColor(color)
         .font('Helvetica-Bold')
@@ -208,128 +203,134 @@ function drawPill(doc, text, x, y, width, height, bg, color, fontSize = 11){
     doc.restore();
 }
 
-function drawSectionTitle(doc, text, x, y){
+function sectionTitle(doc, text, x, y, size = 12){
     doc.fillColor(COLORS.purple)
         .font('Helvetica-Bold')
-        .fontSize(13)
+        .fontSize(size)
         .text(safeText(text).toUpperCase(), x, y, {
-            characterSpacing: 0.4
+            characterSpacing: 0.35
         });
 }
 
-function drawLabelValueRow(doc, iconFn, label, value, x, y, width){
-    const iconX = x;
-    const textX = x + 38;
-
-    if(iconFn){
-        iconFn(doc, iconX, y + 1, COLORS.purple);
-    }
-
-    doc.fillColor(COLORS.muted2)
+function label(doc, text, x, y, width){
+    doc.fillColor(COLORS.gray600)
         .font('Helvetica-Bold')
-        .fontSize(9)
-        .text(safeText(label).toUpperCase(), textX, y + 4, {
-            width: 92
+        .fontSize(8.2)
+        .text(safeText(text).toUpperCase(), x, y, {
+            width,
+            characterSpacing: 0.45
         });
+}
 
-    doc.fillColor(COLORS.text)
-        .font('Helvetica-Bold')
-        .fontSize(11)
-        .text(safeText(value, 'No disponible'), textX + 105, y + 3, {
-            width: width - 145,
+function value(doc, text, x, y, width, options = {}){
+    doc.fillColor(options.color || COLORS.black)
+        .font(options.font || 'Helvetica-Bold')
+        .fontSize(options.size || 10.5)
+        .text(safeText(text, 'No disponible'), x, y, {
+            width,
             lineGap: 1
         });
 }
 
 /*
 ====================================================
-ICONOS DIBUJADOS
+ICONOS VECTORIALES
+Estilo profesional sin depender de FontAwesome como fuente.
 ====================================================
 */
 
-function iconCalendar(doc, x, y, color){
-    doc.save();
-    doc.strokeColor(color).lineWidth(1.6);
-    doc.roundedRect(x + 3, y + 4, 18, 18, 3).stroke();
-    doc.moveTo(x + 3, y + 10).lineTo(x + 21, y + 10).stroke();
-    doc.moveTo(x + 8, y + 2).lineTo(x + 8, y + 7).stroke();
-    doc.moveTo(x + 16, y + 2).lineTo(x + 16, y + 7).stroke();
-    doc.restore();
-}
+function iconCalendar(doc, x, y, color = COLORS.purple, size = 22){
+    const s = size / 22;
 
-function iconClock(doc, x, y, color){
-    doc.save();
-    doc.strokeColor(color).lineWidth(1.6);
-    doc.circle(x + 12, y + 13, 10).stroke();
-    doc.moveTo(x + 12, y + 13).lineTo(x + 12, y + 7).stroke();
-    doc.moveTo(x + 12, y + 13).lineTo(x + 17, y + 15).stroke();
-    doc.restore();
-}
-
-function iconPin(doc, x, y, color){
-    doc.save();
-    doc.strokeColor(color).lineWidth(1.7);
-    doc.circle(x + 12, y + 9, 7).stroke();
-    doc.circle(x + 12, y + 9, 2.4).stroke();
-    doc.moveTo(x + 7, y + 14).lineTo(x + 12, y + 24).stroke();
-    doc.moveTo(x + 17, y + 14).lineTo(x + 12, y + 24).stroke();
-    doc.restore();
-}
-
-function iconCity(doc, x, y, color){
-    doc.save();
-    doc.strokeColor(color).lineWidth(1.5);
-    doc.rect(x + 3, y + 9, 6, 14).stroke();
-    doc.rect(x + 12, y + 4, 7, 19).stroke();
-    doc.rect(x + 22, y + 12, 6, 11).stroke();
-    doc.moveTo(x + 1, y + 23).lineTo(x + 30, y + 23).stroke();
-    doc.restore();
-}
-
-function iconInfo(doc, x, y, color){
-    doc.save();
-    doc.strokeColor(color).lineWidth(1.7);
-    doc.roundedRect(x + 2, y + 7, 16, 15, 3).stroke();
-    doc.moveTo(x + 20, y + 22).lineTo(x + 29, y + 22).stroke();
-    doc.moveTo(x + 10, y + 4).lineTo(x + 10, y + 7).stroke();
-    doc.restore();
-}
-
-function iconPerson(doc, x, y, color){
     doc.save();
     doc.strokeColor(color).lineWidth(1.8);
-    doc.circle(x + 13, y + 8, 6).stroke();
-    doc.roundedRect(x + 4, y + 19, 18, 9, 4).stroke();
+    doc.roundedRect(x + 2*s, y + 4*s, 18*s, 16*s, 3*s).stroke();
+    doc.moveTo(x + 2*s, y + 9*s).lineTo(x + 20*s, y + 9*s).stroke();
+    doc.moveTo(x + 7*s, y + 2*s).lineTo(x + 7*s, y + 6*s).stroke();
+    doc.moveTo(x + 15*s, y + 2*s).lineTo(x + 15*s, y + 6*s).stroke();
     doc.restore();
 }
 
-function iconTicket(doc, x, y, color){
+function iconClock(doc, x, y, color = COLORS.purple, size = 22){
+    const s = size / 22;
+
+    doc.save();
+    doc.strokeColor(color).lineWidth(1.8);
+    doc.circle(x + 11*s, y + 11*s, 9*s).stroke();
+    doc.moveTo(x + 11*s, y + 11*s).lineTo(x + 11*s, y + 6*s).stroke();
+    doc.moveTo(x + 11*s, y + 11*s).lineTo(x + 15*s, y + 13*s).stroke();
+    doc.restore();
+}
+
+function iconPin(doc, x, y, color = COLORS.purple, size = 22){
+    const s = size / 22;
+
+    doc.save();
+    doc.strokeColor(color).lineWidth(1.8);
+    doc.circle(x + 11*s, y + 8*s, 6*s).stroke();
+    doc.circle(x + 11*s, y + 8*s, 2*s).stroke();
+    doc.moveTo(x + 7*s, y + 13*s).lineTo(x + 11*s, y + 21*s).stroke();
+    doc.moveTo(x + 15*s, y + 13*s).lineTo(x + 11*s, y + 21*s).stroke();
+    doc.restore();
+}
+
+function iconBuilding(doc, x, y, color = COLORS.purple, size = 22){
+    const s = size / 22;
+
+    doc.save();
+    doc.strokeColor(color).lineWidth(1.6);
+    doc.rect(x + 3*s, y + 8*s, 5*s, 12*s).stroke();
+    doc.rect(x + 10*s, y + 4*s, 6*s, 16*s).stroke();
+    doc.rect(x + 18*s, y + 11*s, 4*s, 9*s).stroke();
+    doc.moveTo(x + 1*s, y + 20*s).lineTo(x + 24*s, y + 20*s).stroke();
+    doc.restore();
+}
+
+function iconInfo(doc, x, y, color = COLORS.purple){
+    doc.save();
+    doc.strokeColor(color).lineWidth(1.8);
+    doc.roundedRect(x + 2, y + 8, 20, 18, 4).stroke();
+    doc.moveTo(x + 24, y + 26).lineTo(x + 32, y + 26).stroke();
+    doc.moveTo(x + 12, y + 5).lineTo(x + 12, y + 8).stroke();
+    doc.restore();
+}
+
+function iconUser(doc, x, y, color = COLORS.purple){
+    doc.save();
+    doc.strokeColor(color).lineWidth(1.9);
+    doc.circle(x + 14, y + 10, 6).stroke();
+    doc.roundedRect(x + 5, y + 22, 18, 9, 4).stroke();
+    doc.restore();
+}
+
+function iconTicket(doc, x, y, color = COLORS.purple){
     doc.save();
     doc.strokeColor(color).lineWidth(1.7);
-    doc.roundedRect(x + 2, y + 5, 24, 17, 3).stroke();
-    doc.circle(x + 2, y + 13.5, 3).fill(COLORS.white).stroke(color);
-    doc.circle(x + 26, y + 13.5, 3).fill(COLORS.white).stroke(color);
-    doc.moveTo(x + 14, y + 7).lineTo(x + 14, y + 20).dash(2, { space: 2 }).stroke();
+    doc.roundedRect(x + 2, y + 6, 26, 18, 4).stroke();
+    doc.circle(x + 2, y + 15, 3).fill(COLORS.white).stroke(color);
+    doc.circle(x + 28, y + 15, 3).fill(COLORS.white).stroke(color);
+    doc.dash(2, { space: 2 });
+    doc.moveTo(x + 15, y + 8).lineTo(x + 15, y + 22).stroke();
     doc.undash();
     doc.restore();
 }
 
-function iconTag(doc, x, y, color){
+function iconTag(doc, x, y, color = COLORS.purple){
     doc.save();
-    doc.strokeColor(color).lineWidth(1.7);
-    doc.moveTo(x + 4, y + 13)
-        .lineTo(x + 15, y + 3)
-        .lineTo(x + 27, y + 15)
-        .lineTo(x + 16, y + 26)
+    doc.strokeColor(color).lineWidth(1.8);
+    doc.moveTo(x + 5, y + 15)
+        .lineTo(x + 17, y + 4)
+        .lineTo(x + 30, y + 16)
+        .lineTo(x + 18, y + 28)
         .closePath()
         .stroke();
-    doc.circle(x + 16, y + 10, 2.2).stroke();
+    doc.circle(x + 18, y + 11, 2.3).stroke();
     doc.restore();
 }
 
-function iconShield(doc, x, y, color){
+function iconShield(doc, x, y, color = COLORS.green){
     doc.save();
-    doc.strokeColor(color).lineWidth(1.5);
+    doc.strokeColor(color).lineWidth(1.6);
     doc.moveTo(x + 12, y + 2)
         .lineTo(x + 22, y + 7)
         .lineTo(x + 20, y + 19)
@@ -342,7 +343,7 @@ function iconShield(doc, x, y, color){
     doc.restore();
 }
 
-function iconCrown(doc, x, y, color){
+function iconCrown(doc, x, y, color = COLORS.black){
     doc.save();
     doc.fillColor(color);
     doc.moveTo(x + 2, y + 22)
@@ -360,7 +361,7 @@ function iconCrown(doc, x, y, color){
 
 /*
 ====================================================
-IMÁGENES
+IMÁGENES Y CÓDIGOS
 ====================================================
 */
 
@@ -390,7 +391,7 @@ async function descargarImagen(url){
     }
 }
 
-function dibujarCover(doc, image, x, y, width, height){
+function drawCover(doc, image, x, y, width, height){
     const scale = Math.max(
         width / image.width,
         height / image.height
@@ -404,12 +405,10 @@ function dibujarCover(doc, image, x, y, width, height){
 
     doc.save();
     doc.rect(x, y, width, height).clip();
-
     doc.image(image.buffer, posX, posY, {
         width: newWidth,
         height: newHeight
     });
-
     doc.restore();
 }
 
@@ -425,21 +424,21 @@ async function generarBarcode(texto){
 
 /*
 ====================================================
-ESTRUCTURA DEL BOLETO
+SECCIONES DEL BOLETO
 ====================================================
 */
 
-function drawPageBackground(doc){
+function drawTicketBackground(doc){
     doc.rect(0, 0, PAGE.width, PAGE.height).fill(COLORS.pageBg);
 
-    drawShadow(
+    shadow(
         doc,
         TICKET.x,
         TICKET.y,
         TICKET.width,
         TICKET.height,
         TICKET.radius,
-        0.14
+        0.13
     );
 
     doc.fillColor(COLORS.white)
@@ -452,13 +451,13 @@ function drawPageBackground(doc){
         )
         .fill();
 
-    const notchY = 520;
-    const notchR = 18;
-
+    /*
+    Notches laterales estilo boleto, colocados fuera del contenido principal.
+    */
     doc.save();
     doc.fillColor(COLORS.pageBg);
-    doc.circle(TICKET.x, notchY, notchR).fill();
-    doc.circle(TICKET.x + TICKET.width, notchY, notchR).fill();
+    doc.circle(TICKET.x, 548, 16).fill();
+    doc.circle(TICKET.x + TICKET.width, 548, 16).fill();
     doc.restore();
 }
 
@@ -466,13 +465,13 @@ function drawHeader(doc, datos, flyer){
     const x = TICKET.x;
     const y = TICKET.y;
     const width = TICKET.width;
-    const height = 280;
+    const height = 250;
 
     doc.save();
     doc.roundedRect(x, y, width, height, TICKET.radius).clip();
 
     if(flyer){
-        dibujarCover(doc, flyer, x, y, width, height);
+        drawCover(doc, flyer, x, y, width, height);
     }else{
         const bg = doc.linearGradient(x, y, x + width, y + height);
         bg.stop(0, COLORS.navy);
@@ -480,272 +479,272 @@ function drawHeader(doc, datos, flyer){
         doc.rect(x, y, width, height).fill(bg);
     }
 
-    doc.opacity(0.62);
+    doc.opacity(0.60);
     doc.rect(x, y, width, height).fill('#000000');
     doc.opacity(1);
 
-    const glow = doc.linearGradient(x, y + height - 70, x, y + height);
-    glow.stop(0, '#000000');
-    glow.stop(1, COLORS.purple);
-    doc.opacity(0.35);
-    doc.rect(x, y + height - 80, width, 80).fill(glow);
+    const bottomGlow = doc.linearGradient(x, y + height - 80, x, y + height);
+    bottomGlow.stop(0, '#000000');
+    bottomGlow.stop(1, COLORS.purple);
+    doc.opacity(0.30);
+    doc.rect(x, y + height - 80, width, 80).fill(bottomGlow);
     doc.opacity(1);
 
     doc.restore();
 
-    doc.save();
-
-    doc.circle(x + 34, y + 36, 20).fill(COLORS.white);
+    /* Logo */
+    doc.circle(x + 36, y + 36, 20).fill(COLORS.white);
 
     doc.fillColor(COLORS.black)
         .font('Helvetica-Bold')
-        .fontSize(24)
-        .text('E', x + 27, y + 25);
+        .fontSize(23)
+        .text('E', x + 29, y + 25);
 
     doc.fillColor(COLORS.white)
         .font('Helvetica-Bold')
         .fontSize(20)
-        .text('EXELARIS', x + 62, y + 22);
+        .text('EXELARIS', x + 66, y + 21);
 
     doc.fillColor('#E5E7EB')
         .font('Helvetica')
-        .fontSize(9)
-        .text('EVENT MANAGEMENT', x + 63, y + 47, {
-            characterSpacing: 0.7
-        });
-
-    const badgeX = x + width - 95;
-    const badgeY = y + 23;
-    const badgeW = 75;
-    const badgeH = 34;
-
-    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 10)
-        .fill(tipoColor(datos.tipo));
-
-    if(esVIP(datos.tipo)){
-        iconCrown(doc, badgeX + 8, badgeY + 4, COLORS.black2);
-        doc.fillColor(COLORS.black2)
-            .font('Helvetica-Bold')
-            .fontSize(14)
-            .text('VIP', badgeX + 39, badgeY + 12, {
-                width: 30,
-                align: 'center'
-            });
-    }else{
-        doc.fillColor(COLORS.white)
-            .font('Helvetica-Bold')
-            .fontSize(12)
-            .text('General', badgeX + 8, badgeY + 11, {
-                width: badgeW - 16,
-                align: 'center'
-            });
-    }
-
-    const eventName = safeText(datos.eventoNombre, 'Evento EXELARIS');
-    const words = eventName.split(' ');
-
-    if(words.length >= 2){
-        doc.fillColor(COLORS.white)
-            .font('Helvetica-Bold')
-            .fontSize(35)
-            .text(words[0], x + 28, y + 118, {
-                width: 190
-            });
-
-        doc.fillColor('#C084FC')
-            .font('Helvetica-Bold')
-            .fontSize(35)
-            .text(words.slice(1).join(' '), x + 28, y + 158, {
-                width: 220
-            });
-    }else{
-        doc.fillColor(COLORS.white)
-            .font('Helvetica-Bold')
-            .fontSize(34)
-            .text(eventName, x + 28, y + 125, {
-                width: 250
-            });
-    }
-
-    iconCalendar(doc, x + 30, y + 222, '#A78BFA');
-
-    doc.fillColor('#F8FAFC')
-        .font('Helvetica-Bold')
-        .fontSize(12)
-        .text(fechaMX(datos.eventoFecha), x + 65, y + 226, {
-            width: 250
-        });
-
-    doc.restore();
-
-    const g = doc.linearGradient(x, y + height - 4, x + width, y + height - 4);
-    g.stop(0, COLORS.purple);
-    g.stop(0.55, COLORS.blue);
-    g.stop(1, COLORS.gold);
-
-    doc.rect(x, y + height - 5, width, 5).fill(g);
-}
-
-function drawInfoEvent(doc, datos){
-    const x = TICKET.x + 22;
-    const y = 330;
-    const width = TICKET.width - 44;
-
-    iconInfo(doc, x, y - 8, COLORS.purple);
-    drawSectionTitle(doc, 'Información del evento', x + 42, y);
-
-    drawLine(doc, x, y + 34, x + width, COLORS.line);
-
-    const rowX = x + 2;
-    const rowW = width - 4;
-    const startY = y + 55;
-    const gap = 36;
-
-    drawLabelValueRow(doc, iconCalendar, 'Fecha', fechaMX(datos.eventoFecha), rowX, startY, rowW);
-    drawLine(doc, x, startY + 28, x + width, '#EEF2F7');
-
-    drawLabelValueRow(doc, iconClock, 'Hora', safeText(datos.eventoHora, 'No disponible'), rowX, startY + gap, rowW);
-    drawLine(doc, x, startY + gap + 28, x + width, '#EEF2F7');
-
-    drawLabelValueRow(doc, iconPin, 'Lugar', safeText(datos.eventoLugar, 'No disponible'), rowX, startY + gap * 2, rowW);
-    drawLine(doc, x, startY + gap * 2 + 28, x + width, '#EEF2F7');
-
-    drawLabelValueRow(doc, iconPin, 'Dirección', safeText(datos.eventoDireccion, 'No disponible'), rowX, startY + gap * 3, rowW);
-    drawLine(doc, x, startY + gap * 3 + 28, x + width, '#EEF2F7');
-
-    drawLabelValueRow(doc, iconCity, 'Ciudad', safeText(datos.eventoCiudad, 'No disponible'), rowX, startY + gap * 4, rowW);
-}
-
-function drawHolder(doc, datos){
-    const x = TICKET.x + 22;
-    const y = 550;
-    const width = TICKET.width - 44;
-    const height = 78;
-
-    drawCard(doc, x, y, width, height, 14, COLORS.purpleSoft, false);
-
-    iconPerson(doc, x + 22, y + 20, COLORS.purple);
-
-    drawSectionTitle(doc, 'Titular del boleto', x + 60, y + 24);
-
-    doc.fillColor(COLORS.black)
-        .font('Helvetica-Bold')
-        .fontSize(18)
-        .text(
-            truncate(safeText(datos.nombre, 'SIN NOMBRE'), 32),
-            x + 60,
-            y + 48,
-            {
-                width: width - 85,
-                align: 'center'
-            }
-        );
-}
-
-function drawFolioPrice(doc, datos){
-    const x = TICKET.x + 22;
-    const y = 648;
-    const width = TICKET.width - 44;
-    const height = 70;
-
-    drawCard(doc, x, y, width, height, 14, COLORS.white, true);
-
-    iconTicket(doc, x + 24, y + 20, COLORS.purple);
-
-    doc.fillColor(COLORS.purple)
-        .font('Helvetica-Bold')
-        .fontSize(10)
-        .text('FOLIO', x + 66, y + 20);
-
-    doc.fillColor(COLORS.black)
-        .font('Helvetica-Bold')
-        .fontSize(15)
-        .text(safeText(datos.folio, 'EXL-000000'), x + 66, y + 38, {
-            width: 110
-        });
-
-    drawLine(doc, x + width / 2, y + 17, x + width / 2, COLORS.line2, 1);
-
-    iconTag(doc, x + width / 2 + 28, y + 17, COLORS.purple);
-
-    doc.fillColor(COLORS.purple)
-        .font('Helvetica-Bold')
-        .fontSize(10)
-        .text('PRECIO', x + width / 2 + 72, y + 20);
-
-    doc.fillColor(COLORS.black)
-        .font('Helvetica-Bold')
-        .fontSize(15)
-        .text(precioMX(datos.precio), x + width / 2 + 72, y + 38, {
-            width: 105
-        });
-}
-
-function drawAccess(doc, datos, barcode){
-    const x = TICKET.x + 22;
-    const y = 738;
-    const width = TICKET.width - 44;
-    const height = 290;
-
-    drawCard(doc, x, y, width, height, 14, COLORS.white, true);
-
-    drawLine(doc, x + 22, y + 36, x + 115, COLORS.purple, 1);
-    doc.circle(x + 116, y + 36, 2.5).fill(COLORS.purple);
-
-    drawSectionTitle(doc, 'Acceso al evento', x + 126, y + 27);
-
-    doc.circle(x + width - 116, y + 36, 2.5).fill(COLORS.purple);
-    drawLine(doc, x + width - 114, y + 36, x + width - 22, COLORS.purple, 1);
-
-    const qrBase64 = limpiarBase64QR(datos.qr);
-    const qrBuffer = Buffer.from(qrBase64, 'base64');
-
-    const qrX = x + 110;
-    const qrY = y + 69;
-    const qrBox = 134;
-
-    doc.save();
-    doc.strokeColor(COLORS.purple);
-    doc.lineWidth(1.4);
-    doc.moveTo(qrX - 13, qrY + 18).lineTo(qrX - 13, qrY - 9).lineTo(qrX + 18, qrY - 9).stroke();
-    doc.moveTo(qrX + qrBox - 18, qrY - 9).lineTo(qrX + qrBox + 13, qrY - 9).lineTo(qrX + qrBox + 13, qrY + 18).stroke();
-    doc.moveTo(qrX - 13, qrY + qrBox - 18).lineTo(qrX - 13, qrY + qrBox + 9).lineTo(qrX + 18, qrY + qrBox + 9).stroke();
-    doc.moveTo(qrX + qrBox - 18, qrY + qrBox + 9).lineTo(qrX + qrBox + 13, qrY + qrBox + 9).lineTo(qrX + qrBox + 13, qrY + qrBox - 18).stroke();
-    doc.restore();
-
-    doc.image(qrBuffer, qrX, qrY, {
-        width: qrBox,
-        height: qrBox
-    });
-
-    doc.fillColor(COLORS.muted2)
-        .font('Helvetica-Bold')
         .fontSize(8)
-        .text('ID ÚNICO', x, y + 212, {
-            width,
-            align: 'center',
+        .text('EVENT MANAGEMENT', x + 67, y + 45, {
             characterSpacing: 0.8
         });
 
+    /* Badge */
+    const badgeX = x + width - 92;
+    const badgeY = y + 25;
+    const badgeW = 72;
+    const badgeH = 32;
+
+    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 10)
+        .fill(ticketColor(datos.tipo));
+
+    if(isVIP(datos.tipo)){
+        iconCrown(doc, badgeX + 7, badgeY + 3, COLORS.black);
+
+        doc.fillColor(COLORS.black)
+            .font('Helvetica-Bold')
+            .fontSize(13)
+            .text('VIP', badgeX + 38, badgeY + 10, {
+                width: 28,
+                align: 'center'
+            });
+    }else{
+        doc.fillColor(COLORS.white)
+            .font('Helvetica-Bold')
+            .fontSize(11)
+            .text('General', badgeX + 7, badgeY + 10, {
+                width: badgeW - 14,
+                align: 'center'
+            });
+    }
+
+    /* Nombre evento */
+    const eventName = safeText(datos.eventoNombre, 'Evento EXELARIS');
+    const parts = eventName.split(' ');
+
+    doc.fillColor(COLORS.white)
+        .font('Helvetica-Bold')
+        .fontSize(33)
+        .text(parts[0] || eventName, x + 30, y + 112, {
+            width: 220
+        });
+
+    doc.fillColor('#C084FC')
+        .font('Helvetica-Bold')
+        .fontSize(33)
+        .text(parts.length > 1 ? parts.slice(1).join(' ') : '', x + 30, y + 150, {
+            width: 240
+        });
+
+    iconCalendar(doc, x + 31, y + 205, '#A78BFA', 20);
+
+    doc.fillColor(COLORS.white)
+        .font('Helvetica-Bold')
+        .fontSize(11.5)
+        .text(fechaMX(datos.eventoFecha), x + 64, y + 207, {
+            width: 260
+        });
+
+    const headerLine = doc.linearGradient(x, y + height - 5, x + width, y + height - 5);
+    headerLine.stop(0, COLORS.purple);
+    headerLine.stop(0.6, COLORS.blue);
+    headerLine.stop(1, COLORS.gold);
+
+    doc.rect(x, y + height - 5, width, 5).fill(headerLine);
+}
+
+function drawEventInfo(doc, datos){
+    const x = TICKET.x + 28;
+    const y = 300;
+    const width = TICKET.width - 56;
+
+    iconInfo(doc, x, y - 8, COLORS.purple);
+    sectionTitle(doc, 'Información del evento', x + 42, y);
+    line(doc, x, y + 34, x + width);
+
+    const rowX = x + 2;
+    const labelX = rowX + 36;
+    const valueX = rowX + 150;
+    const rowW = width - 2;
+    const startY = y + 55;
+    const gap = 33;
+
+    const rows = [
+        {
+            icon: iconCalendar,
+            label: 'Fecha',
+            value: fechaMX(datos.eventoFecha)
+        },
+        {
+            icon: iconClock,
+            label: 'Hora',
+            value: safeText(datos.eventoHora, 'No disponible')
+        },
+        {
+            icon: iconPin,
+            label: 'Lugar',
+            value: safeText(datos.eventoLugar, 'No disponible')
+        },
+        {
+            icon: iconPin,
+            label: 'Dirección',
+            value: safeText(datos.eventoDireccion, 'No disponible')
+        },
+        {
+            icon: iconBuilding,
+            label: 'Ciudad',
+            value: safeText(datos.eventoCiudad, 'No disponible')
+        }
+    ];
+
+    rows.forEach((row, index) => {
+        const currentY = startY + (gap * index);
+
+        row.icon(doc, rowX, currentY - 1, COLORS.purple, 21);
+        label(doc, row.label, labelX, currentY + 3, 90);
+        value(doc, row.value, valueX, currentY + 1, rowW - 150, {
+            size: 10.4
+        });
+
+        if(index < rows.length - 1){
+            line(doc, x, currentY + 26, x + width, '#EEF2F7');
+        }
+    });
+}
+
+function drawHolder(doc, datos){
+    const x = TICKET.x + 28;
+    const y = 515;
+    const width = TICKET.width - 56;
+    const height = 76;
+
+    card(doc, x, y, width, height, 14, COLORS.purpleSoft, false);
+
+    iconUser(doc, x + 22, y + 21, COLORS.purple);
+    sectionTitle(doc, 'Titular del boleto', x + 62, y + 23, 11);
+
     doc.fillColor(COLORS.black)
         .font('Helvetica-Bold')
-        .fontSize(12)
-        .text(safeText(datos.uuid), x + 60, y + 229, {
-            width: width - 120,
+        .fontSize(17)
+        .text(truncate(safeText(datos.nombre, 'SIN NOMBRE'), 34), x + 70, y + 47, {
+            width: width - 90,
+            align: 'center'
+        });
+}
+
+function drawFolioPrice(doc, datos){
+    const x = TICKET.x + 28;
+    const y = 612;
+    const width = TICKET.width - 56;
+    const height = 68;
+
+    card(doc, x, y, width, height, 13, COLORS.white, true);
+
+    iconTicket(doc, x + 24, y + 19, COLORS.purple);
+    label(doc, 'Folio', x + 67, y + 19, 90);
+    value(doc, safeText(datos.folio, 'EXL-000000'), x + 67, y + 36, 118, {
+        size: 14
+    });
+
+    line(doc, x + width / 2, y + 15, x + width / 2, COLORS.gray300, 1);
+
+    iconTag(doc, x + width / 2 + 26, y + 17, COLORS.purple);
+    label(doc, 'Precio', x + width / 2 + 70, y + 19, 90);
+    value(doc, precioMX(datos.precio), x + width / 2 + 70, y + 36, 110, {
+        size: 14
+    });
+}
+
+function drawAccess(doc, datos, barcode){
+    const x = TICKET.x + 28;
+    const y = 700;
+    const width = TICKET.width - 56;
+    const height = 315;
+
+    card(doc, x, y, width, height, 14, COLORS.white, true);
+
+    line(doc, x + 22, y + 35, x + 112, COLORS.purple, 1);
+    doc.circle(x + 113, y + 35, 2.6).fill(COLORS.purple);
+    sectionTitle(doc, 'Acceso al evento', x + 124, y + 26, 12);
+    doc.circle(x + width - 113, y + 35, 2.6).fill(COLORS.purple);
+    line(doc, x + width - 111, y + 35, x + width - 22, COLORS.purple, 1);
+
+    const qrBuffer = Buffer.from(limpiarQR(datos.qr), 'base64');
+    const qrX = x + 102;
+    const qrY = y + 62;
+    const qrSize = 144;
+
+    /* Esquinas del QR */
+    doc.save();
+    doc.strokeColor(COLORS.purple);
+    doc.lineWidth(1.4);
+
+    doc.moveTo(qrX - 13, qrY + 22).lineTo(qrX - 13, qrY - 10).lineTo(qrX + 22, qrY - 10).stroke();
+    doc.moveTo(qrX + qrSize - 22, qrY - 10).lineTo(qrX + qrSize + 13, qrY - 10).lineTo(qrX + qrSize + 13, qrY + 22).stroke();
+    doc.moveTo(qrX - 13, qrY + qrSize - 22).lineTo(qrX - 13, qrY + qrSize + 10).lineTo(qrX + 22, qrY + qrSize + 10).stroke();
+    doc.moveTo(qrX + qrSize - 22, qrY + qrSize + 10).lineTo(qrX + qrSize + 13, qrY + qrSize + 10).lineTo(qrX + qrSize + 13, qrY + qrSize - 22).stroke();
+
+    doc.restore();
+
+    doc.image(qrBuffer, qrX, qrY, {
+        width: qrSize,
+        height: qrSize
+    });
+
+    label(doc, 'ID único', x, y + 225, width);
+    doc.fillColor(COLORS.black)
+        .font('Helvetica-Bold')
+        .fontSize(11)
+        .text(safeText(datos.uuid), x + 55, y + 242, {
+            width: width - 110,
             align: 'center'
         });
 
-    drawPill(doc, '✓  BOLETO OFICIAL', x + 112, y + 252, 126, 24, COLORS.greenSoft, COLORS.greenText, 9);
+    doc.roundedRect(x + 112, y + 262, 126, 24, 7)
+        .fill(COLORS.greenSoft);
 
-    doc.fillColor(COLORS.black2)
-        .font('Helvetica')
+    iconShield(doc, x + 120, y + 262, COLORS.green);
+
+    doc.fillColor(COLORS.greenText)
+        .font('Helvetica-Bold')
         .fontSize(9)
-        .text('Presenta este código QR al ingresar al evento.', x + 24, y + 282, {
-            width: width - 48,
+        .text('BOLETO OFICIAL', x + 150, y + 270, {
+            width: 82,
             align: 'center'
         });
 
-    drawDottedLine(doc, x + 24, y + 312, width - 48);
+    doc.fillColor(COLORS.gray700)
+        .font('Helvetica')
+        .fontSize(8.8)
+        .text('Presenta este código QR al ingresar al evento.', x + 22, y + 294, {
+            width: width - 44,
+            align: 'center'
+        });
+
+    dottedLine(doc, x + 22, y + 318, width - 44);
 
     doc.image(barcode, x + 72, y + 334, {
         width: 180,
@@ -755,29 +754,29 @@ function drawAccess(doc, datos, barcode){
     doc.fillColor(COLORS.black)
         .font('Helvetica-Bold')
         .fontSize(8)
-        .text(safeText(datos.uuid), x + 72, y + 365, {
+        .text(safeText(datos.uuid), x + 72, y + 366, {
             width: 180,
             align: 'center'
         });
 
-    doc.roundedRect(x + width - 86, y + 343, 64, 28, 8)
+    doc.roundedRect(x + width - 84, y + 345, 62, 27, 8)
         .strokeColor('#86EFAC')
         .lineWidth(1)
         .stroke();
 
-    iconShield(doc, x + width - 78, y + 347, COLORS.green);
+    iconShield(doc, x + width - 77, y + 348, COLORS.green);
 
     doc.fillColor(COLORS.greenText)
         .font('Helvetica-Bold')
-        .fontSize(10)
-        .text('VÁLIDO', x + width - 48, y + 352);
+        .fontSize(9.5)
+        .text('VÁLIDO', x + width - 47, y + 353);
 }
 
 function drawFooter(doc){
     const x = TICKET.x;
-    const y = PAGE.height - 116;
+    const y = 1032;
     const width = TICKET.width;
-    const height = 94;
+    const height = 68;
 
     doc.save();
     doc.roundedRect(x, y, width, height, TICKET.radius).clip();
@@ -788,50 +787,45 @@ function drawFooter(doc){
 
     doc.fillColor(COLORS.white)
         .font('Helvetica-Bold')
-        .fontSize(16)
-        .text('EXELARIS', x + 22, y + 31);
+        .fontSize(15)
+        .text('EXELARIS', x + 24, y + 24);
 
-    doc.fillColor('#CBD5E1')
+    doc.fillColor(COLORS.gray300)
         .font('Helvetica')
         .fontSize(7)
-        .text('EVENT MANAGEMENT', x + 22, y + 51);
+        .text('EVENT MANAGEMENT', x + 24, y + 43);
 
-    drawLine(doc, x + 105, y + 25, x + 105, '#475569', 0.8);
+    line(doc, x + 118, y + 19, x + 118, '#475569', 0.8);
 
     doc.fillColor('#E5E7EB')
         .font('Helvetica')
-        .fontSize(8)
-        .text(
-            'Este boleto es único e intransferible.\nEl código QR solo puede ser utilizado\nuna vez para ingresar al evento.',
-            x + 122,
-            y + 25,
-            {
-                width: 170,
-                lineGap: 3
-            }
-        );
+        .fontSize(7.6)
+        .text('Este boleto es único e intransferible.\nEl código QR solo puede utilizarse una vez.', x + 135, y + 20, {
+            width: 155,
+            lineGap: 3
+        });
 
     doc.fillColor('#E5E7EB')
         .font('Helvetica')
         .fontSize(7)
-        .text('Powered by', x + width - 86, y + 29, {
-            width: 65,
+        .text('Powered by', x + width - 84, y + 19, {
+            width: 60,
             align: 'right'
         });
 
     doc.fillColor(COLORS.white)
         .font('Helvetica-Bold')
-        .fontSize(9)
-        .text('EXELARIS®', x + width - 86, y + 45, {
-            width: 65,
+        .fontSize(8.5)
+        .text('EXELARIS', x + width - 84, y + 35, {
+            width: 60,
             align: 'right'
         });
 
     doc.fillColor('#C084FC')
         .font('Helvetica-Bold')
-        .fontSize(11)
-        .text(new Date().getFullYear().toString(), x + width - 86, y + 65, {
-            width: 65,
+        .fontSize(10)
+        .text(new Date().getFullYear().toString(), x + width - 84, y + 50, {
+            width: 60,
             align: 'right'
         });
 }
@@ -853,10 +847,16 @@ async function generarPDF(datos){
                 });
             }
 
-            const rutaPDF = path.join(carpeta, `boleto-${datos.folio}.pdf`);
+            const rutaPDF = path.join(
+                carpeta,
+                `boleto-${datos.folio}.pdf`
+            );
 
             const doc = new PDFDocument({
-                size: [PAGE.width, PAGE.height],
+                size: [
+                    PAGE.width,
+                    PAGE.height
+                ],
                 margin: 0,
                 info: {
                     Title: safeText(datos.eventoNombre, 'Boleto EXELARIS'),
@@ -869,7 +869,7 @@ async function generarPDF(datos){
             const stream = fs.createWriteStream(rutaPDF);
 
             stream.on('finish', () => {
-                console.log(`✅ PDF Premium final generado: ${rutaPDF}`);
+                console.log(`✅ PDF Profesional generado: ${rutaPDF}`);
                 resolve(rutaPDF);
             });
 
@@ -883,9 +883,9 @@ async function generarPDF(datos){
             const flyer = await descargarImagen(datos.eventoFlyer);
             const barcode = await generarBarcode(datos.uuid);
 
-            drawPageBackground(doc);
+            drawTicketBackground(doc);
             drawHeader(doc, datos, flyer);
-            drawInfoEvent(doc, datos);
+            drawEventInfo(doc, datos);
             drawHolder(doc, datos);
             drawFolioPrice(doc, datos);
             drawAccess(doc, datos, barcode);

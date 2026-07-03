@@ -1,10 +1,30 @@
+/*
+====================================================
+EXELARIS Tickets
+Archivo: backend/services/email.js
+Versión: 2.1
+
+Resend:
+- 1 correo por compra.
+- Links de descarga siempre.
+- Adjuntos solo si el peso total <= EMAIL_MAX_ATTACHMENTS_MB.
+- Si Resend responde con error, se lanza error correctamente.
+====================================================
+*/
+
 const fs = require('fs');
-const path = require('path');
+
+/*
+====================================================
+UTILIDADES
+====================================================
+*/
 
 function dineroMX(valor){
     return Number(valor || 0).toLocaleString('es-MX',{
         style:'currency',
-        currency:'MXN'
+        currency:'MXN',
+        maximumFractionDigits:0
     });
 }
 
@@ -32,6 +52,12 @@ function obtenerPesoArchivosMB(boletos){
     };
 }
 
+/*
+====================================================
+HTML DEL CORREO
+====================================================
+*/
+
 function generarHTML({
     compra,
     comprador,
@@ -44,15 +70,23 @@ function generarHTML({
             <td style="padding:12px;border-bottom:1px solid #E5E7EB;">
                 ${index + 1}
             </td>
+
             <td style="padding:12px;border-bottom:1px solid #E5E7EB;">
                 <strong>${escaparHTML(boleto.folio)}</strong><br>
-                <span style="color:#6B7280;">${escaparHTML(boleto.nombre)}</span>
+                <span style="color:#6B7280;">
+                    ${escaparHTML(boleto.nombre)}
+                </span>
             </td>
+
             <td style="padding:12px;border-bottom:1px solid #E5E7EB;">
                 ${escaparHTML(boleto.tipo)}
             </td>
+
             <td style="padding:12px;border-bottom:1px solid #E5E7EB;text-align:right;">
-                <a href="${boleto.pdfUrl}" style="color:#6D28D9;font-weight:bold;">
+                <a
+                    href="${boleto.pdfUrl}"
+                    style="color:#6D28D9;font-weight:bold;"
+                >
                     Descargar
                 </a>
             </td>
@@ -72,18 +106,26 @@ function generarHTML({
             margin:0 auto;
             padding:28px 16px;
         ">
+
             <div style="
                 background:#111827;
                 color:white;
                 padding:28px;
                 border-radius:24px 24px 0 0;
             ">
-                <div style="font-size:13px;letter-spacing:2px;color:#C4B5FD;font-weight:bold;">
+                <div style="
+                    font-size:13px;
+                    letter-spacing:2px;
+                    color:#C4B5FD;
+                    font-weight:bold;
+                ">
                     EXELARIS EVENT MANAGEMENT
                 </div>
+
                 <h1 style="margin:12px 0 0;font-size:28px;">
                     Gracias por tu compra
                 </h1>
+
                 <p style="margin:10px 0 0;color:#CBD5E1;">
                     Tus boletos digitales han sido generados correctamente.
                 </p>
@@ -95,6 +137,7 @@ function generarHTML({
                 border-radius:0 0 24px 24px;
                 box-shadow:0 18px 50px rgba(15,23,42,.08);
             ">
+
                 <p>
                     Hola <strong>${escaparHTML(comprador.nombre)}</strong>,
                     te compartimos el resumen de tu compra.
@@ -110,15 +153,19 @@ function generarHTML({
                     <p style="margin:0 0 8px;">
                         <strong>Evento:</strong> ${escaparHTML(evento.nombre)}
                     </p>
+
                     <p style="margin:0 0 8px;">
                         <strong>Fecha:</strong> ${escaparHTML(evento.fecha)} ${escaparHTML(evento.hora || '')}
                     </p>
+
                     <p style="margin:0 0 8px;">
                         <strong>Lugar:</strong> ${escaparHTML(evento.lugar)}
                     </p>
+
                     <p style="margin:0 0 8px;">
                         <strong>Compra:</strong> ${escaparHTML(compra.compraId)}
                     </p>
+
                     <p style="margin:0;">
                         <strong>Total:</strong> ${dineroMX(compra.total)}
                     </p>
@@ -143,15 +190,18 @@ function generarHTML({
                             <th align="right" style="padding:12px;">PDF</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         ${filasBoletos}
                     </tbody>
                 </table>
 
                 <p style="margin-top:22px;color:#4B5563;line-height:1.6;">
-                    ${adjuntaPDFs
+                    ${
+                        adjuntaPDFs
                         ? 'También adjuntamos los PDFs de tus boletos a este correo.'
-                        : 'Por el peso de los archivos, este correo incluye únicamente enlaces de descarga.'}
+                        : 'Por el peso de los archivos, este correo incluye únicamente enlaces de descarga.'
+                    }
                 </p>
 
                 <div style="
@@ -163,7 +213,8 @@ function generarHTML({
                     font-size:14px;
                     line-height:1.6;
                 ">
-                    Presenta tu boleto digital o impreso al ingresar. Cada QR es único y solo puede utilizarse una vez.
+                    Presenta tu boleto digital o impreso al ingresar.
+                    Cada QR es único y solo puede utilizarse una vez.
                 </div>
 
                 <p style="
@@ -174,11 +225,18 @@ function generarHTML({
                 ">
                     EXELARIS EVENT MANAGEMENT
                 </p>
+
             </div>
         </div>
     </div>
     `;
 }
+
+/*
+====================================================
+ENVIAR CORREO
+====================================================
+*/
 
 async function enviarCompraPorCorreo({
     compra,
@@ -212,8 +270,8 @@ async function enviarCompraPorCorreo({
 
     const attachments = adjuntaPDFs
         ? boletos.map(boleto => ({
-            filename: `boleto-${boleto.folio}.pdf`,
-            content: fs.readFileSync(boleto.rutaPDF).toString('base64')
+            filename:`boleto-${boleto.folio}.pdf`,
+            content:fs.readFileSync(boleto.rutaPDF).toString('base64')
         }))
         : [];
 
@@ -228,25 +286,23 @@ async function enviarCompraPorCorreo({
         boletos,
         adjuntaPDFs
     });
+
     const respuesta = await resend.emails.send({
-    from,
-    to: [comprador.correo],
-    subject: `Tus boletos EXELARIS - ${evento.nombre}`,
-    html,
-    attachments
+        from,
+        to:[comprador.correo],
+        subject:`Tus boletos EXELARIS - ${evento.nombre}`,
+        html,
+        attachments
     });
 
     console.log('📧 Respuesta de Resend:');
     console.log(respuesta);
 
     if(respuesta.error){
-
         throw new Error(
             respuesta.error.message ||
             'Resend no pudo enviar el correo'
         );
-
-<<<<<<< HEAD
     }
 
     console.log('✅ Correo enviado con Resend');
@@ -257,19 +313,6 @@ async function enviarCompraPorCorreo({
         pesoAdjuntosMB: peso.totalMB,
         resendId: respuesta?.data?.id || null
     };
-=======
-}
-
-console.log('✅ Correo enviado con Resend');
-
-return {
-    enviado:true,
-    metodo: adjuntaPDFs ? 'adjuntos_y_links' : 'solo_links',
-    pesoAdjuntosMB: peso.totalMB,
-    resendId: respuesta?.data?.id || null
-};
-   
->>>>>>> 4560f1ac930ea18c2ee4157ea93d8b0d47a89a46
 }
 
 module.exports = enviarCompraPorCorreo;

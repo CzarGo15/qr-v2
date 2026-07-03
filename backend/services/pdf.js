@@ -2,12 +2,14 @@
 ====================================================
 EXELARIS Tickets
 Archivo: backend/services/pdf.js
-Versión: 4.0 Premium
+Versión: 4.1 Premium
 
-Objetivo:
-- Boleto digital profesional para correo, WhatsApp e impresión.
-- Compatible con el backend actual.
-- Mantiene la misma firma: generarPDF(datos) => rutaPDF.
+IMPORTANTE:
+Al generar un boleto nuevo, en logs de Render debe aparecer:
+✅ PDF Premium v4.1 generado
+
+Y en el pie del boleto debe aparecer:
+EXELARIS Ticket System v4.1
 ====================================================
 */
 
@@ -18,59 +20,35 @@ const axios = require('axios');
 const bwipjs = require('bwip-js');
 const { imageSize } = require('image-size');
 
-/*
-====================================================
-CONFIGURACIÓN GENERAL
-====================================================
-*/
-
 const PAGE = {
     width: 390,
     height: 1040
 };
 
 const COLORS = {
-    background: '#EEF2F7',
+    bg: '#EEF2F7',
     navy: '#020617',
     dark: '#0F172A',
-    black: '#111827',
     white: '#FFFFFF',
-    muted: '#64748B',
-    softText: '#94A3B8',
-    border: '#E5E7EB',
-    card: '#FFFFFF',
-    cardSoft: '#F8FAFC',
+    black: '#111827',
+    gray: '#64748B',
+    lightGray: '#E5E7EB',
+    soft: '#F8FAFC',
     purple: '#7C3AED',
     purpleDark: '#5B21B6',
     blue: '#2563EB',
     gold: '#FACC15',
-    goldDark: '#92400E',
     green: '#16A34A',
-    red: '#DC2626'
+    amberBg: '#FFFBEB',
+    amberText: '#92400E'
 };
 
-/*
-====================================================
-UTILIDADES
-====================================================
-*/
-
-function texto(valor, fallback = ''){
-    if(valor === undefined || valor === null){
+function safeText(value, fallback = ''){
+    if(value === undefined || value === null || value === ''){
         return fallback;
     }
 
-    return String(valor);
-}
-
-function precioMX(valor){
-    const numero = Number(valor || 0);
-
-    return numero.toLocaleString('es-MX', {
-        style: 'currency',
-        currency: 'MXN',
-        maximumFractionDigits: 0
-    });
+    return String(value);
 }
 
 function fechaMX(fecha){
@@ -81,10 +59,6 @@ function fechaMX(fecha){
     try{
         const valor = String(fecha);
 
-        /*
-        Evita que fechas tipo 2026-10-31 se recorran un día
-        por conversión UTC/local.
-        */
         if(/^\d{4}-\d{2}-\d{2}$/.test(valor)){
             const [year, month, day] = valor.split('-').map(Number);
 
@@ -104,75 +78,66 @@ function fechaMX(fecha){
             });
 
     }catch(error){
-        return texto(fecha);
+        return safeText(fecha);
     }
 }
 
-function tipoColor(tipo){
-    return texto(tipo).toUpperCase() === 'VIP'
-        ? COLORS.gold
-        : COLORS.blue;
+function precioMX(valor){
+    const numero = Number(valor || 0);
+
+    return numero.toLocaleString('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+        maximumFractionDigits: 0
+    });
 }
 
-function tipoTextColor(tipo){
-    return texto(tipo).toUpperCase() === 'VIP'
-        ? COLORS.black
-        : COLORS.white;
+function esVIP(tipo){
+    return safeText(tipo).toUpperCase() === 'VIP';
 }
 
-function drawShadow(doc, x, y, width, height, radius = 18){
+function colorTipo(tipo){
+    return esVIP(tipo) ? COLORS.gold : COLORS.blue;
+}
+
+function colorTextoTipo(tipo){
+    return esVIP(tipo) ? COLORS.black : COLORS.white;
+}
+
+function drawShadow(doc, x, y, width, height, radius){
     doc.save();
     doc.opacity(0.08);
     doc.fillColor('#000000');
-    doc.roundedRect(x, y + 5, width, height, radius).fill();
+    doc.roundedRect(x, y + 6, width, height, radius).fill();
     doc.restore();
 }
 
-function drawCard(doc, x, y, width, height, radius = 18, fill = COLORS.card){
+function drawCard(doc, x, y, width, height, radius = 22, color = COLORS.white){
     drawShadow(doc, x, y, width, height, radius);
 
     doc.save();
-    doc.fillColor(fill);
+    doc.fillColor(color);
     doc.roundedRect(x, y, width, height, radius).fill();
     doc.restore();
 }
 
-function drawDivider(doc, x1, y, x2){
+function drawDivider(doc, x, y, width){
     doc.save();
-    doc.strokeColor(COLORS.border);
+    doc.strokeColor(COLORS.lightGray);
     doc.lineWidth(0.7);
-    doc.moveTo(x1, y).lineTo(x2, y).stroke();
+    doc.moveTo(x, y).lineTo(x + width, y).stroke();
     doc.restore();
-}
-
-function drawLabelValue(doc, label, value, x, y, width, options = {}){
-    doc.fillColor(options.labelColor || COLORS.muted)
-        .font('Helvetica-Bold')
-        .fontSize(options.labelSize || 7.5)
-        .text(texto(label).toUpperCase(), x, y, {
-            width,
-            characterSpacing: 0.6
-        });
-
-    doc.fillColor(options.valueColor || COLORS.black)
-        .font(options.valueFont || 'Helvetica-Bold')
-        .fontSize(options.valueSize || 11)
-        .text(texto(value, 'No disponible'), x, y + 13, {
-            width,
-            lineGap: 1
-        });
 }
 
 function drawPill(doc, text, x, y, width, height, fillColor, textColor){
     doc.save();
 
-    doc.roundedRect(x, y, width, height, height / 2)
-        .fill(fillColor);
+    doc.roundedRect(x, y, width, height, height / 2).fill(fillColor);
 
     doc.fillColor(textColor)
         .font('Helvetica-Bold')
         .fontSize(10)
-        .text(texto(text).toUpperCase(), x, y + 7, {
+        .text(safeText(text).toUpperCase(), x, y + 7, {
             width,
             align: 'center'
         });
@@ -180,32 +145,42 @@ function drawPill(doc, text, x, y, width, height, fillColor, textColor){
     doc.restore();
 }
 
-function drawSectionTitle(doc, title, x, y){
+function drawSectionTitle(doc, text, x, y){
     doc.fillColor(COLORS.purple)
         .font('Helvetica-Bold')
         .fontSize(9)
-        .text(texto(title).toUpperCase(), x, y, {
+        .text(safeText(text).toUpperCase(), x, y, {
             characterSpacing: 1
         });
 }
 
-function drawDottedLine(doc, x, y, width){
-    doc.save();
+function drawLabelValue(doc, label, value, x, y, width, options = {}){
+    doc.fillColor(options.labelColor || COLORS.gray)
+        .font('Helvetica-Bold')
+        .fontSize(options.labelSize || 7.4)
+        .text(safeText(label).toUpperCase(), x, y, {
+            width,
+            characterSpacing: 0.6
+        });
 
+    doc.fillColor(options.valueColor || COLORS.black)
+        .font(options.valueFont || 'Helvetica-Bold')
+        .fontSize(options.valueSize || 11)
+        .text(safeText(value, 'No disponible'), x, y + 13, {
+            width,
+            lineGap: 1
+        });
+}
+
+function dottedLine(doc, x, y, width){
+    doc.save();
     doc.strokeColor('#CBD5E1');
     doc.lineWidth(1);
     doc.dash(4, { space: 5 });
     doc.moveTo(x, y).lineTo(x + width, y).stroke();
     doc.undash();
-
     doc.restore();
 }
-
-/*
-====================================================
-IMÁGENES
-====================================================
-*/
 
 async function descargarImagen(url){
     try{
@@ -246,7 +221,6 @@ function dibujarCover(doc, image, x, y, width, height){
     const posY = y - ((newHeight - height) / 2);
 
     doc.save();
-
     doc.rect(x, y, width, height).clip();
 
     doc.image(image.buffer, posX, posY, {
@@ -257,81 +231,69 @@ function dibujarCover(doc, image, x, y, width, height){
     doc.restore();
 }
 
-async function generarBarcode(textoCodigo){
+async function generarBarcode(texto){
     return await bwipjs.toBuffer({
         bcid: 'code128',
-        text: texto(textoCodigo),
+        text: safeText(texto),
         scale: 2,
         height: 10,
         includetext: false
     });
 }
 
-/*
-====================================================
-BLOQUES VISUALES
-====================================================
-*/
-
 function drawBackground(doc){
-    const gradient = doc.linearGradient(0, 0, PAGE.width, PAGE.height);
-    gradient.stop(0, '#F8FAFC');
-    gradient.stop(0.52, '#EEF2FF');
-    gradient.stop(1, '#E0F2FE');
-
-    doc.rect(0, 0, PAGE.width, PAGE.height).fill(gradient);
+    doc.rect(0, 0, PAGE.width, PAGE.height).fill(COLORS.bg);
 
     doc.save();
-    doc.opacity(0.12);
-    doc.circle(-60, 120, 170).fill(COLORS.purple);
-    doc.circle(PAGE.width + 40, 530, 160).fill(COLORS.blue);
+    doc.opacity(0.11);
+    doc.circle(-40, 130, 145).fill(COLORS.purple);
+    doc.circle(PAGE.width + 35, 600, 160).fill(COLORS.blue);
     doc.restore();
 }
 
 function drawHeader(doc, datos, flyer){
-    const headerHeight = 255;
+    const headerHeight = 268;
 
     if(flyer){
         dibujarCover(doc, flyer, 0, 0, PAGE.width, headerHeight);
     }else{
-        const gradient = doc.linearGradient(0, 0, PAGE.width, headerHeight);
-        gradient.stop(0, COLORS.dark);
-        gradient.stop(1, COLORS.purpleDark);
-
-        doc.rect(0, 0, PAGE.width, headerHeight).fill(gradient);
+        const g = doc.linearGradient(0, 0, PAGE.width, headerHeight);
+        g.stop(0, COLORS.navy);
+        g.stop(1, COLORS.purpleDark);
+        doc.rect(0, 0, PAGE.width, headerHeight).fill(g);
     }
 
     doc.save();
-    doc.opacity(0.58);
+    doc.opacity(0.62);
     doc.rect(0, 0, PAGE.width, headerHeight).fill('#000000');
     doc.restore();
 
     doc.save();
 
-    doc.roundedRect(18, 18, 38, 38, 13).fill(COLORS.white);
+    doc.roundedRect(18, 18, 40, 40, 14).fill(COLORS.white);
 
     doc.fillColor(COLORS.black)
         .font('Helvetica-Bold')
-        .fontSize(20)
-        .text('E', 31, 25);
+        .fontSize(21)
+        .text('E', 31, 26);
 
     doc.fillColor(COLORS.white)
         .font('Helvetica-Bold')
-        .fontSize(16)
-        .text('EXELARIS', 66, 18);
+        .fontSize(17)
+        .text('EXELARIS', 68, 19);
 
     doc.fillColor('#CBD5E1')
         .font('Helvetica')
         .fontSize(7)
-        .text('EVENT MANAGEMENT', 66, 37, {
+        .text('EVENT MANAGEMENT', 68, 39, {
             characterSpacing: 1.3
         });
 
     drawPill(
         doc,
-        'BOLETO OFICIAL',
+        'Boleto oficial',
         246,
-        20,
+        22,
         126,
         30,
         COLORS.white,
@@ -340,59 +302,58 @@ function drawHeader(doc, datos, flyer){
 
     drawPill(
         doc,
-        texto(datos.tipo, 'GENERAL'),
+        safeText(datos.tipo, 'General'),
         18,
-        82,
+        90,
         92,
         30,
-        tipoColor(datos.tipo),
-        tipoTextColor(datos.tipo)
+        colorTipo(datos.tipo),
+        colorTextoTipo(datos.tipo)
     );
 
     doc.fillColor(COLORS.white)
         .font('Helvetica-Bold')
-        .fontSize(33)
-        .text(texto(datos.eventoNombre, 'Evento EXELARIS'), 18, 122, {
-            width: 320,
+        .fontSize(34)
+        .text(safeText(datos.eventoNombre, 'Evento EXELARIS'), 18, 133, {
+            width: 315,
             lineGap: -2
         });
 
     doc.fillColor('#E5E7EB')
         .font('Helvetica')
         .fontSize(11)
-        .text(`${fechaMX(datos.eventoFecha)} · ${texto(datos.eventoHora)}`, 20, 205, {
+        .text(`${fechaMX(datos.eventoFecha)} · ${safeText(datos.eventoHora)}`, 20, 218, {
             width: 310
         });
 
     doc.fillColor('#CBD5E1')
         .font('Helvetica-Bold')
         .fontSize(9)
-        .text(texto(datos.eventoCiudad), 20, 225, {
+        .text(safeText(datos.eventoCiudad), 20, 238, {
             width: 310,
             characterSpacing: 0.5
         });
 
     doc.restore();
 
-    const barGradient = doc.linearGradient(0, headerHeight - 5, PAGE.width, headerHeight - 5);
-    barGradient.stop(0, COLORS.purple);
-    barGradient.stop(0.55, COLORS.blue);
-    barGradient.stop(1, COLORS.gold);
+    const g = doc.linearGradient(0, headerHeight - 6, PAGE.width, headerHeight - 6);
+    g.stop(0, COLORS.purple);
+    g.stop(0.55, COLORS.blue);
+    g.stop(1, COLORS.gold);
 
-    doc.rect(0, headerHeight - 5, PAGE.width, 5).fill(barGradient);
+    doc.rect(0, headerHeight - 6, PAGE.width, 6).fill(g);
 }
 
 function drawEventInfo(doc, datos){
     const x = 18;
-    const y = 275;
+    const y = 288;
     const width = 354;
     const height = 145;
 
-    drawCard(doc, x, y, width, height, 22);
+    drawCard(doc, x, y, width, height);
 
     drawSectionTitle(doc, 'Información del evento', x + 20, y + 18);
-
-    drawDivider(doc, x + 20, y + 42, x + width - 20);
+    drawDivider(doc, x + 20, y + 42, width - 40);
 
     drawLabelValue(
         doc,
@@ -406,16 +367,16 @@ function drawEventInfo(doc, datos){
     drawLabelValue(
         doc,
         'Hora',
-        texto(datos.eventoHora, 'No disponible'),
+        safeText(datos.eventoHora, 'No disponible'),
         x + 190,
         y + 58,
-        135
+        130
     );
 
     drawLabelValue(
         doc,
         'Lugar',
-        texto(datos.eventoLugar, 'No disponible'),
+        safeText(datos.eventoLugar, 'No disponible'),
         x + 20,
         y + 98,
         145,
@@ -427,12 +388,12 @@ function drawEventInfo(doc, datos){
     drawLabelValue(
         doc,
         'Dirección',
-        `${texto(datos.eventoDireccion)} ${texto(datos.eventoCiudad)}`,
+        `${safeText(datos.eventoDireccion)} ${safeText(datos.eventoCiudad)}`,
         x + 190,
         y + 98,
         140,
         {
-            valueSize: 9.5,
+            valueSize: 9,
             valueFont: 'Helvetica'
         }
     );
@@ -440,44 +401,44 @@ function drawEventInfo(doc, datos){
 
 function drawHolder(doc, datos){
     const x = 18;
-    const y = 438;
+    const y = 452;
     const width = 354;
-    const height = 108;
+    const height = 110;
 
-    drawCard(doc, x, y, width, height, 22, COLORS.cardSoft);
+    drawCard(doc, x, y, width, height, 22, COLORS.soft);
 
     drawSectionTitle(doc, 'Titular del boleto', x + 20, y + 18);
 
     drawPill(
         doc,
-        texto(datos.tipo, 'GENERAL'),
+        safeText(datos.tipo, 'General'),
         x + width - 104,
         y + 16,
         84,
         28,
-        tipoColor(datos.tipo),
-        tipoTextColor(datos.tipo)
+        colorTipo(datos.tipo),
+        colorTextoTipo(datos.tipo)
     );
 
     doc.fillColor(COLORS.black)
         .font('Helvetica-Bold')
         .fontSize(22)
-        .text(texto(datos.nombre, 'SIN NOMBRE'), x + 20, y + 52, {
+        .text(safeText(datos.nombre, 'SIN NOMBRE'), x + 20, y + 53, {
             width: 300,
             lineGap: -1
         });
 
-    doc.fillColor(COLORS.muted)
+    doc.fillColor(COLORS.gray)
         .font('Helvetica')
         .fontSize(8.5)
-        .text('Este nombre será utilizado para identificar el acceso en validación.', x + 20, y + 86, {
+        .text('Identificación del titular para control de acceso.', x + 20, y + 88, {
             width: 300
         });
 }
 
-function drawPurchaseSummary(doc, datos){
+function drawSummary(doc, datos){
     const x = 18;
-    const y = 565;
+    const y = 584;
     const width = 354;
     const height = 78;
 
@@ -486,7 +447,7 @@ function drawPurchaseSummary(doc, datos){
     drawLabelValue(
         doc,
         'Folio',
-        texto(datos.folio, 'EXL-000000'),
+        safeText(datos.folio, 'EXL-000000'),
         x + 20,
         y + 20,
         145,
@@ -496,7 +457,7 @@ function drawPurchaseSummary(doc, datos){
     );
 
     doc.save();
-    doc.strokeColor(COLORS.border);
+    doc.strokeColor(COLORS.lightGray);
     doc.lineWidth(0.8);
     doc.moveTo(x + 177, y + 18).lineTo(x + 177, y + height - 18).stroke();
     doc.restore();
@@ -516,55 +477,45 @@ function drawPurchaseSummary(doc, datos){
 
 function drawAccess(doc, datos, barcode){
     const x = 18;
-    const y = 665;
+    const y = 682;
     const width = 354;
-    const height = 315;
+    const height = 300;
 
     drawCard(doc, x, y, width, height, 24);
 
     drawSectionTitle(doc, 'Acceso al evento', x + 20, y + 18);
 
-    doc.fillColor(COLORS.muted)
+    doc.fillColor(COLORS.gray)
         .font('Helvetica')
         .fontSize(8.5)
         .text('Presenta este QR en la entrada. Válido para una sola lectura.', x + 20, y + 35, {
             width: 300
         });
 
-    drawDottedLine(doc, x + 20, y + 58, width - 40);
+    dottedLine(doc, x + 20, y + 58, width - 40);
 
-    const qrBase64 = texto(datos.qr).replace(/^data:image\/png;base64,/, '');
+    const qrBase64 = safeText(datos.qr).replace(/^data:image\/png;base64,/, '');
     const qrBuffer = Buffer.from(qrBase64, 'base64');
 
     doc.save();
-    doc.roundedRect(108, y + 76, 174, 174, 22).fill('#F8FAFC');
-    doc.roundedRect(116, y + 84, 158, 158, 18).fill(COLORS.white);
-    doc.image(qrBuffer, 126, y + 94, {
-        width: 138,
-        height: 138
+    doc.roundedRect(111, y + 76, 168, 168, 22).fill(COLORS.soft);
+    doc.roundedRect(120, y + 85, 150, 150, 18).fill(COLORS.white);
+
+    doc.image(qrBuffer, 130, y + 95, {
+        width: 130,
+        height: 130
     });
     doc.restore();
 
-    doc.image(barcode, 74, y + 240, {
-        width: 242,
+    doc.image(barcode, 72, y + 250, {
+        width: 246,
         height: 26
     });
 
-    drawPill(
-        doc,
-        'QR ÚNICO',
-        139,
-        y + 267,
-        112,
-        26,
-        COLORS.green,
-        COLORS.white
-    );
-
-    doc.fillColor(COLORS.muted)
+    doc.fillColor(COLORS.gray)
         .font('Helvetica')
         .fontSize(7)
-        .text(texto(datos.uuid), x + 24, y + 298, {
+        .text(safeText(datos.uuid), x + 24, y + 280, {
             width: width - 48,
             align: 'center'
         });
@@ -572,19 +523,17 @@ function drawAccess(doc, datos, barcode){
 
 function drawWarning(doc){
     const x = 18;
-    const y = 990;
+    const y = 996;
     const width = 354;
-    const height = 34;
+    const height = 30;
 
     doc.save();
+    doc.roundedRect(x, y, width, height, 13).fill(COLORS.amberBg);
 
-    doc.roundedRect(x, y, width, height, 14)
-        .fill('#FFFBEB');
-
-    doc.fillColor(COLORS.goldDark)
+    doc.fillColor(COLORS.amberText)
         .font('Helvetica-Bold')
-        .fontSize(7.7)
-        .text('No compartas este boleto públicamente. El QR solo puede usarse una vez.', x + 16, y + 10, {
+        .fontSize(7.5)
+        .text('No compartas este boleto públicamente. El QR solo puede usarse una vez.', x + 16, y + 9, {
             width: width - 32,
             align: 'center'
         });
@@ -593,29 +542,23 @@ function drawWarning(doc){
 }
 
 function drawFooter(doc){
-    const footerY = PAGE.height - 1;
+    const y = PAGE.height - 8;
 
-    const footerGradient = doc.linearGradient(0, footerY - 8, PAGE.width, footerY - 8);
-    footerGradient.stop(0, COLORS.purple);
-    footerGradient.stop(0.5, COLORS.blue);
-    footerGradient.stop(1, COLORS.gold);
+    const g = doc.linearGradient(0, y, PAGE.width, y);
+    g.stop(0, COLORS.purple);
+    g.stop(0.5, COLORS.blue);
+    g.stop(1, COLORS.gold);
 
-    doc.rect(0, footerY - 8, PAGE.width, 8).fill(footerGradient);
+    doc.rect(0, y, PAGE.width, 8).fill(g);
 
     doc.fillColor('#64748B')
         .font('Helvetica')
         .fontSize(6)
-        .text(`EXELARIS Ticket System v4.0 · ${new Date().getFullYear()}`, 18, PAGE.height - 20, {
+        .text(`EXELARIS Ticket System v4.1 · ${new Date().getFullYear()}`, 18, PAGE.height - 23, {
             width: PAGE.width - 36,
             align: 'center'
         });
 }
-
-/*
-====================================================
-GENERAR PDF
-====================================================
-*/
 
 async function generarPDF(datos){
     return new Promise(async(resolve, reject) => {
@@ -634,10 +577,13 @@ async function generarPDF(datos){
             );
 
             const doc = new PDFDocument({
-                size: [PAGE.width, PAGE.height],
+                size: [
+                    PAGE.width,
+                    PAGE.height
+                ],
                 margin: 0,
                 info: {
-                    Title: texto(datos.eventoNombre, 'Boleto EXELARIS'),
+                    Title: safeText(datos.eventoNombre, 'Boleto EXELARIS'),
                     Author: 'EXELARIS',
                     Subject: 'Boleto Digital',
                     Creator: 'EXELARIS EVENTOS'
@@ -647,7 +593,7 @@ async function generarPDF(datos){
             const stream = fs.createWriteStream(rutaPDF);
 
             stream.on('finish', () => {
-                console.log(`✅ PDF generado: ${rutaPDF}`);
+                console.log(`✅ PDF Premium v4.1 generado: ${rutaPDF}`);
                 resolve(rutaPDF);
             });
 
@@ -665,7 +611,7 @@ async function generarPDF(datos){
             drawHeader(doc, datos, flyer);
             drawEventInfo(doc, datos);
             drawHolder(doc, datos);
-            drawPurchaseSummary(doc, datos);
+            drawSummary(doc, datos);
             drawAccess(doc, datos, barcode);
             drawWarning(doc);
             drawFooter(doc);

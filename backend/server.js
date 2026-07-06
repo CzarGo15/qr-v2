@@ -38,6 +38,8 @@ app.use('/api/upload', require('./routes/upload'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/compras', require('./routes/compras'));
 app.use('/api/taquilla', require('./routes/taquilla'));
+app.use('/api/lotes', require('./routes/lotes'));
+app.use('/api/acceso', require('./routes/acceso'));
 
 const PORT = process.env.PORT || 3000;
 

@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>EXELARIS Admin | Taquilla</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+        *{
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:'Poppins',sans-serif;
+            background:#020617;
+            color:#E5E7EB;
+        }
+
+        .glass{
+            background:rgba(15,23,42,.86);
+            border:1px solid rgba(255,255,255,.10);
+            box-shadow:0 24px 80px rgba(0,0,0,.32);
+            backdrop-filter:blur(18px);
+        }
+
+        .input,
+        .select{
+            width:100%;
+            background:#0F172A;
+            border:1px solid rgba(255,255,255,.12);
+            color:white;
+            outline:none;
+            border-radius:18px;
+            padding:14px 16px;
+            font-weight:600;
+        }
+
+        .input:focus,
+        .select:focus{
+            border-color:#7C3AED;
+            box-shadow:0 0 0 4px rgba(124,58,237,.16);
+        }
+
+        .label{
+            display:block;
+            color:#CBD5E1;
+            font-size:13px;
+            font-weight:800;
+            margin-bottom:8px;
+        }
+
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:16px;
+            padding:12px 16px;
+            font-weight:900;
+            font-size:14px;
+            transition:.2s;
+            text-decoration:none;
+        }
+
+        .btn-primary{
+            background:linear-gradient(135deg,#7C3AED,#2563EB);
+            color:white;
+        }
+
+        .btn-primary:hover{
+            transform:translateY(-1px);
+            box-shadow:0 12px 32px rgba(124,58,237,.26);
+        }
+
+        .btn-primary:disabled{
+            opacity:.55;
+            cursor:not-allowed;
+            transform:none;
+        }
+
+        .btn-soft{
+            background:rgba(255,255,255,.08);
+            color:#E5E7EB;
+            border:1px solid rgba(255,255,255,.10);
+        }
+
+        .btn-soft:hover{
+            background:rgba(255,255,255,.14);
+        }
+
+        .counter{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:14px;
+            padding:20px;
+            border-radius:24px;
+            background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.10);
+        }
+
+        .counter-btn{
+            width:42px;
+            height:42px;
+            border-radius:14px;
+            background:#EEF2FF;
+            color:#4F46E5;
+            font-size:24px;
+            font-weight:900;
+        }
+
+        .counter-value{
+            min-width:40px;
+            text-align:center;
+            color:white;
+            font-size:28px;
+            font-weight:900;
+        }
+
+        .assistant-card{
+            padding:18px;
+            border-radius:22px;
+            background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.10);
+        }
+
+        .result-card{
+            padding:18px;
+            border-radius:22px;
+            background:#ECFDF5;
+            border:1px solid #A7F3D0;
+            color:#064E3B;
+        }
+
+        .badge{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            padding:5px 10px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:800;
+        }
+
+        .badge-blue{
+            background:#DBEAFE;
+            color:#1D4ED8;
+        }
+
+        .badge-yellow{
+            background:#FEF3C7;
+            color:#92400E;
+        }
+
+        .checkbox-row{
+            display:flex;
+            align-items:flex-start;
+            gap:12px;
+            padding:15px;
+            border-radius:18px;
+            border:1px solid rgba(255,255,255,.10);
+            background:rgba(255,255,255,.06);
+            cursor:pointer;
+        }
+
+        .checkbox-row input{
+            width:20px;
+            height:20px;
+            margin-top:2px;
+            accent-color:#7C3AED;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="max-w-6xl mx-auto px-5 py-8">
+
+        <header class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+
+            <div>
+                <div class="text-sm tracking-[.28em] text-purple-300 font-bold">
+                    EXELARIS ADMIN
+                </div>
+
+                <h1 class="text-4xl lg:text-5xl font-black tracking-tight text-white mt-2">
+                    Venta en Taquilla
+                </h1>
+
+                <p class="text-slate-400 mt-3 max-w-2xl">
+                    Genera boletos presenciales para pago en efectivo, transferencia o cortesía.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <a
+                    href="compras.html"
+                    class="btn btn-soft"
+                >
+                    Compras / Taquilla
+                </a>
+
+                <a
+                    href="../index.html"
+                    class="btn btn-soft"
+                >
+                    Venta pública
+                </a>
+            </div>
+
+        </header>
+
+        <section class="grid lg:grid-cols-[1fr_360px] gap-6">
+
+            <div class="glass rounded-3xl p-6">
+
+                <h2 class="text-2xl font-black text-white mb-6">
+                    Nueva venta física
+                </h2>
+
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+
+                    <div>
+                        <label class="label">
+                            Nombre comprador
+                        </label>
+
+                        <input
+                            id="nombre"
+                            class="input"
+                            placeholder="Nombre completo"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="label">
+                            Correo
+                        </label>
+
+                        <input
+                            id="correo"
+                            class="input"
+                            placeholder="correo@email.com"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="label">
+                            Teléfono / WhatsApp
+                        </label>
+
+                        <input
+                            id="telefono"
+                            class="input"
+                            placeholder="9210000000"
+                        >
+                    </div>
+
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
+
+                    <div>
+                        <label class="label">
+                            Método de pago
+                        </label>
+
+                        <select
+                            id="metodoPago"
+                            class="select"
+                        >
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="cortesia">Cortesía</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="label">
+                            Vendedor
+                        </label>
+
+                        <input
+                            id="vendedor"
+                            class="input"
+                            value="Administrador"
+                        >
+                    </div>
+
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
+
+                    <div class="counter">
+                        <div>
+                            <div class="text-white font-black text-xl">
+                                General
+                            </div>
+
+                            <p class="text-slate-400 text-sm">
+                                Acceso general
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button
+                                class="counter-btn"
+                                onclick="cambiarCantidad('general',-1)"
+                            >
+                                -
+                            </button>
+
+                            <div
+                                id="cantGeneral"
+                                class="counter-value"
+                            >
+                                0
+                            </div>
+
+                            <button
+                                class="counter-btn"
+                                onclick="cambiarCantidad('general',1)"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="counter">
+                        <div>
+                            <div class="text-white font-black text-xl">
+                                VIP
+                            </div>
+
+                            <p class="text-slate-400 text-sm">
+                                Mesa reservada 4 a 8
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button
+                                class="counter-btn"
+                                onclick="cambiarCantidad('vip',-1)"
+                            >
+                                -
+                            </button>
+
+                            <div
+                                id="cantVip"
+                                class="counter-value"
+                            >
+                                0
+                            </div>
+
+                            <button
+                                class="counter-btn"
+                                onclick="cambiarCantidad('vip',1)"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <label class="checkbox-row mb-6">
+                    <input
+                        id="compradorAsistente"
+                        type="checkbox"
+                        checked
+                        onchange="renderAsistentes()"
+                    >
+
+                    <span>
+                        <strong class="text-white">
+                            El comprador usará el primer boleto
+                        </strong>
+
+                        <small class="block text-slate-400 mt-1">
+                            El primer boleto quedará a nombre del comprador.
+                        </small>
+                    </span>
+                </label>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-black text-white mb-4">
+                        Asistentes
+                    </h3>
+
+                    <div
+                        id="asistentes"
+                        class="grid gap-3"
+                    ></div>
+                </div>
+
+                <label class="checkbox-row mb-6">
+                    <input
+                        id="enviarCorreo"
+                        type="checkbox"
+                    >
+
+                    <span>
+                        <strong class="text-white">
+                            Enviar correo al comprador
+                        </strong>
+
+                        <small class="block text-slate-400 mt-1">
+                            Requiere capturar correo. Si no se marca, solo se generan PDFs para imprimir.
+                        </small>
+                    </span>
+                </label>
+
+                <button
+                    id="btnVender"
+                    onclick="vender()"
+                    class="btn btn-primary w-full"
+                >
+                    Generar venta de taquilla
+                </button>
+
+            </div>
+
+            <aside class="glass rounded-3xl p-6 h-fit sticky top-6">
+
+                <h2 class="text-2xl font-black text-white mb-5">
+                    Resumen
+                </h2>
+
+                <div class="space-y-4 text-sm">
+
+                    <div class="flex justify-between border-b border-white/10 pb-3">
+                        <span class="text-slate-400">
+                            General
+                        </span>
+
+                        <strong
+                            id="resGeneral"
+                            class="text-white"
+                        >
+                            0
+                        </strong>
+                    </div>
+
+                    <div class="flex justify-between border-b border-white/10 pb-3">
+                        <span class="text-slate-400">
+                            VIP
+                        </span>
+
+                        <strong
+                            id="resVip"
+                            class="text-white"
+                        >
+                            0
+                        </strong>
+                    </div>
+
+                    <div class="flex justify-between border-b border-white/10 pb-3">
+                        <span class="text-slate-400">
+                            Total boletos
+                        </span>
+
+                        <strong
+                            id="resTotalBoletos"
+                            class="text-white"
+                        >
+                            0
+                        </strong>
+                    </div>
+
+                    <div class="flex justify-between text-2xl pt-2">
+                        <span class="text-white font-black">
+                            Importe
+                        </span>
+
+                        <strong
+                            id="resImporte"
+                            class="text-purple-300"
+                        >
+                            $0
+                        </strong>
+                    </div>
+
+                </div>
+
+                <div
+                    id="resultado"
+                    class="mt-6 space-y-3"
+                ></div>
+
+            </aside>
+
+        </section>
+
+    </main>
+
+    <script>
+        /*
+        ====================================================
+        CONFIGURACIÓN
+        ====================================================
+        */
+
+        const API = 'https://fiestaretro-api.onrender.com';
+
+        const precios = {
+            general:250,
+            vip:350
+        };
+
+        const estado = {
+            general:0,
+            vip:0,
+            asistentes:[]
+        };
+
+        /*
+        ====================================================
+        UTILIDADES
+        ====================================================
+        */
+
+        function dinero(valor){
+            return Number(valor || 0).toLocaleString('es-MX',{
+                style:'currency',
+                currency:'MXN',
+                maximumFractionDigits:0
+            });
+        }
+
+        function escapar(texto){
+            return String(texto || '')
+                .replaceAll('&','&amp;')
+                .replaceAll('<','&lt;')
+                .replaceAll('>','&gt;')
+                .replaceAll('"','&quot;')
+                .replaceAll("'","&#039;");
+        }
+
+        /*
+        ====================================================
+        CANTIDADES
+        ====================================================
+        */
+
+        function cambiarCantidad(tipo,delta){
+
+            if(tipo === 'vip'){
+
+                if(delta > 0){
+                    if(estado.vip === 0){
+                        estado.vip = 4;
+                    }else if(estado.vip < 8){
+                        estado.vip++;
+                    }else{
+                        alert('VIP permite máximo 8 boletos por mesa reservada');
+                    }
+                }else{
+                    if(estado.vip <= 4){
+                        estado.vip = 0;
+                    }else{
+                        estado.vip--;
+                    }
+                }
+
+            }else{
+
+                estado.general = Math.max(
+                    0,
+                    estado.general + delta
+                );
+
+            }
+
+            actualizarUI();
+            renderAsistentes();
+
+        }
+
+        function obtenerTipos(){
+            const tipos = [];
+
+            for(let i = 0; i < estado.general; i++){
+                tipos.push('General');
+            }
+
+            for(let i = 0; i < estado.vip; i++){
+                tipos.push('VIP');
+            }
+
+            return tipos;
+        }
+
+        function actualizarUI(){
+            document.getElementById('cantGeneral').textContent = estado.general;
+            document.getElementById('cantVip').textContent = estado.vip;
+
+            document.getElementById('resGeneral').textContent = estado.general;
+            document.getElementById('resVip').textContent = estado.vip;
+
+            const totalBoletos = estado.general + estado.vip;
+
+            document.getElementById('resTotalBoletos').textContent = totalBoletos;
+
+            const metodo = document.getElementById('metodoPago').value;
+
+            const importe = metodo === 'cortesia'
+                ? 0
+                : (estado.general * precios.general) + (estado.vip * precios.vip);
+
+            document.getElementById('resImporte').textContent = dinero(importe);
+        }
+
+        document.getElementById('metodoPago').addEventListener('change', actualizarUI);
+
+        /*
+        ====================================================
+        ASISTENTES
+        ====================================================
+        */
+
+        function renderAsistentes(){
+            const cont = document.getElementById('asistentes');
+            const tipos = obtenerTipos();
+            const comprador = document.getElementById('nombre').value.trim();
+            const compradorAsistente = document.getElementById('compradorAsistente').checked;
+
+            if(tipos.length === 0){
+                cont.innerHTML = `
+                    <div class="text-slate-400 font-bold">
+                        Selecciona boletos para capturar asistentes.
+                    </div>
+                `;
+
+                estado.asistentes = [];
+                return;
+            }
+
+            estado.asistentes = tipos.map((tipo,index) => {
+                const anterior = estado.asistentes[index] || {};
+
+                if(index === 0 && compradorAsistente){
+                    return {
+                        tipo,
+                        nombre:comprador,
+                        bloqueado:true
+                    };
+                }
+
+                return {
+                    tipo,
+                    nombre:anterior.bloqueado ? '' : (anterior.nombre || ''),
+                    bloqueado:false
+                };
+            });
+
+            cont.innerHTML = estado.asistentes.map((asistente,index) => `
+                <div class="assistant-card">
+                    <label class="label">
+                        Boleto ${index + 1} - ${asistente.tipo}
+                    </label>
+
+                    <input
+                        class="input"
+                        ${asistente.bloqueado ? 'disabled' : ''}
+                        value="${escapar(asistente.nombre || '')}"
+                        placeholder="${asistente.bloqueado ? 'Se usará el nombre del comprador' : 'Nombre del asistente'}"
+                        oninput="actualizarAsistente(${index},this.value)"
+                    >
+
+                    ${
+                        asistente.bloqueado
+                        ? '<div class="text-green-300 text-sm font-bold mt-2">Este boleto queda a nombre del comprador.</div>'
+                        : ''
+                    }
+                </div>
+            `).join('');
+        }
+
+        function actualizarAsistente(index,value){
+            if(estado.asistentes[index]){
+                estado.asistentes[index].nombre = value.trim();
+            }
+        }
+
+        document.getElementById('nombre').addEventListener('input', renderAsistentes);
+
+        /*
+        ====================================================
+        VENDER
+        ====================================================
+        */
+
+        function validar(){
+            const nombre = document.getElementById('nombre').value.trim();
+            const correo = document.getElementById('correo').value.trim();
+            const enviarCorreo = document.getElementById('enviarCorreo').checked;
+
+            if(!nombre){
+                return 'Captura el nombre del comprador';
+            }
+
+            if(enviarCorreo && !correo){
+                return 'Para enviar correo debes capturar el correo';
+            }
+
+            const total = estado.general + estado.vip;
+
+            if(total === 0){
+                return 'Selecciona al menos un boleto';
+            }
+
+            if(estado.vip > 0 && (estado.vip < 4 || estado.vip > 8)){
+                return 'VIP es mesa reservada: mínimo 4 y máximo 8 boletos';
+            }
+
+            return null;
+        }
+
+        function construirPayload(){
+            const nombre = document.getElementById('nombre').value.trim();
+
+            return {
+                comprador:{
+                    nombre,
+                    correo:document.getElementById('correo').value.trim(),
+                    telefono:document.getElementById('telefono').value.trim()
+                },
+                metodoPago:document.getElementById('metodoPago').value,
+                vendedor:document.getElementById('vendedor').value.trim() || 'Administrador',
+                enviarCorreo:document.getElementById('enviarCorreo').checked,
+                boletos:estado.asistentes.map(asistente => ({
+                    tipo:asistente.tipo,
+                    nombre:asistente.nombre || nombre
+                }))
+            };
+        }
+
+        async function vender(){
+            const error = validar();
+
+            if(error){
+                alert(error);
+                return;
+            }
+
+            const boton = document.getElementById('btnVender');
+            const resultado = document.getElementById('resultado');
+
+            try{
+                boton.disabled = true;
+                boton.textContent = 'Generando boletos...';
+
+                resultado.innerHTML = '';
+
+                const response = await fetch(`${API}/api/taquilla/vender`,{
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/json'
+                    },
+                    body:JSON.stringify(construirPayload())
+                });
+
+                const data = await response.json();
+
+                if(!data.success){
+                    throw new Error(data.error || 'No se pudo generar la venta');
+                }
+
+                resultado.innerHTML = `
+                    <div class="result-card">
+                        <div class="font-black text-lg">
+                            Venta generada correctamente
+                        </div>
+
+                        <div class="mt-2">
+                            Compra: <strong>${escapar(data.compraId)}</strong>
+                        </div>
+
+                        <div>
+                            Boletos: <strong>${data.total}</strong>
+                        </div>
+
+                        <div>
+                            Total: <strong>${dinero(data.importe)}</strong>
+                        </div>
+
+                        <div>
+                            Correo: <strong>${data.correo?.enviado ? 'Enviado' : 'No enviado'}</strong>
+                        </div>
+                    </div>
+
+                    ${data.boletos.map(boleto => `
+                        <div class="result-card">
+                            <div>
+                                <strong>${escapar(boleto.folio)}</strong>
+                                <span class="badge ${boleto.tipo === 'VIP' ? 'badge-yellow' : 'badge-blue'}">
+                                    ${escapar(boleto.tipo)}
+                                </span>
+                            </div>
+
+                            <div class="text-sm mt-1">
+                                ${escapar(boleto.nombre)}
+                            </div>
+
+                            <div class="flex gap-2 mt-3">
+                                <a
+                                    href="${boleto.pdfUrl}"
+                                    target="_blank"
+                                    class="btn btn-primary"
+                                >
+                                    Abrir PDF
+                                </a>
+
+                                <button
+                                    onclick="window.open('${boleto.pdfUrl}','_blank')"
+                                    class="btn btn-soft"
+                                >
+                                    Imprimir
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+
+            }catch(error){
+                console.error(error);
+                alert(error.message);
+            }finally{
+                boton.disabled = false;
+                boton.textContent = 'Generar venta de taquilla';
+            }
+        }
+
+        actualizarUI();
+        renderAsistentes();
+    </script>
+
+</body>
+</html>

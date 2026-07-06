@@ -1,0 +1,46 @@
+/*
+====================================================
+EXELARIS Tickets
+Archivo: server.js
+Usar este archivo si Render ejecuta "node server.js" desde la raíz.
+====================================================
+*/
+
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json({ limit:'25mb' }));
+app.use(express.urlencoded({ extended:true }));
+
+app.get('/', (req,res) => {
+    res.json({
+        success:true,
+        sistema:'EXELARIS Tickets API',
+        estado:'Activo'
+    });
+});
+
+app.get('/health', (req,res) => {
+    res.json({
+        success:true,
+        message:'API funcionando'
+    });
+});
+
+app.use('/api/eventos', require('./backend/routes/eventos'));
+app.use('/api/boletos', require('./backend/routes/boletos'));
+app.use('/api/validar', require('./backend/routes/validar'));
+app.use('/api/upload', require('./backend/routes/upload'));
+app.use('/api/dashboard', require('./backend/routes/dashboard'));
+app.use('/api/compras', require('./backend/routes/compras'));
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`✅ Servidor EXELARIS corriendo en puerto ${PORT}`);
+});

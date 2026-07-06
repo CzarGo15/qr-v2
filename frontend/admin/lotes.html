@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EXELARIS Admin | Lotes físicos</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+body{font-family:Poppins,sans-serif;background:#020617;color:#E5E7EB}
+.glass{background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.1);box-shadow:0 24px 80px rgba(0,0,0,.35);backdrop-filter:blur(18px)}
+.input,.select{width:100%;background:#0F172A;border:1px solid rgba(255,255,255,.12);color:white;outline:none;border-radius:18px;padding:14px 16px;font-weight:700}
+.label{display:block;color:#CBD5E1;font-size:13px;font-weight:900;margin-bottom:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:16px;padding:12px 16px;font-weight:900;font-size:14px;text-decoration:none;transition:.2s}
+.btn-primary{background:linear-gradient(135deg,#7C3AED,#2563EB);color:white}.btn-primary:disabled{opacity:.55}
+.btn-soft{background:rgba(255,255,255,.08);color:#E5E7EB;border:1px solid rgba(255,255,255,.1)}
+.card{border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:18px}
+.result{border-radius:20px;background:#ECFDF5;color:#064E3B;border:1px solid #A7F3D0;padding:16px}
+.badge{display:inline-flex;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:900}
+.badge-green{background:#DCFCE7;color:#166534}.badge-blue{background:#DBEAFE;color:#1D4ED8}
+</style>
+</head>
+<body>
+<main class="max-w-6xl mx-auto px-5 py-8">
+<header class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+<div>
+<div class="text-sm tracking-[.28em] text-purple-300 font-bold">EXELARIS ADMIN</div>
+<h1 class="text-4xl lg:text-5xl font-black text-white mt-2">Lotes físicos</h1>
+<p class="text-slate-400 mt-3">Genera boletos activos para vender en restaurantes, bares, tiendas o promotores.</p>
+</div>
+<div class="flex gap-3 flex-wrap">
+<a class="btn btn-soft" href="compras.html">Compras</a>
+<a class="btn btn-soft" href="acceso.html">Acceso QR</a>
+</div>
+</header>
+
+<section class="grid lg:grid-cols-[1fr_360px] gap-6">
+<div class="glass rounded-3xl p-6">
+<h2 class="text-2xl font-black text-white mb-6">Crear lote para punto de venta</h2>
+<div id="eventoBox" class="card mb-6">Cargando evento...</div>
+
+<div class="grid md:grid-cols-2 gap-4 mb-5">
+<div>
+<label class="label">Categoría</label>
+<select id="categoriaId" class="select" onchange="renderResumen()"></select>
+</div>
+<div>
+<label class="label" id="cantidadLabel">Cantidad</label>
+<input id="cantidad" class="input" type="number" min="1" value="1" oninput="renderResumen()">
+</div>
+</div>
+
+<div class="grid md:grid-cols-2 gap-4 mb-5">
+<div>
+<label class="label">Punto de venta</label>
+<input id="puntoVenta" class="input" placeholder="Ej. Restaurante X">
+</div>
+<div>
+<label class="label">Responsable</label>
+<input id="responsable" class="input" placeholder="Ej. Juan Pérez">
+</div>
+</div>
+
+<div class="mb-5">
+<label class="label">Notas</label>
+<input id="notas" class="input" placeholder="Ej. Se entregan 100 boletos físicos activos">
+</div>
+
+<div class="card mb-5">
+<div class="text-green-300 font-black text-lg">Modo recomendado: boleto activo para venta externa</div>
+<p class="text-slate-300 mt-2 text-sm">
+Los boletos de este lote nacen activos. El cliente compra en el comercio, se lleva su boleto y en la entrada del evento el QR será válido. El sistema sabrá que pertenece al punto de venta capturado.
+</p>
+</div>
+
+<button id="btnCrear" onclick="crearLote()" class="btn btn-primary w-full">Generar lote físico activo</button>
+<div id="resultado" class="mt-6 space-y-3"></div>
+</div>
+
+<aside class="glass rounded-3xl p-6 h-fit sticky top-6">
+<h2 class="text-2xl font-black text-white mb-5">Resumen</h2>
+<div id="resumen" class="space-y-4"></div>
+</aside>
+</section>
+</main>
+
+<script>
+const API='https://fiestaretro-api.onrender.com';
+let config=null;
+
+function dinero(v){
+return Number(v||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0});
+}
+
+function esc(t){
+return String(t||'')
+.replaceAll('&','&amp;')
+.replaceAll('<','&lt;')
+.replaceAll('>','&gt;')
+.replaceAll('"','&quot;')
+.replaceAll("'","&#039;");
+}
+
+function categoria(){
+const id=document.getElementById('categoriaId').value;
+return (config?.categorias||[]).find(c=>c.id===id);
+}
+
+async function cargarConfig(){
+try{
+const r=await fetch(`${API}/api/lotes/config`);
+const d=await r.json();
+
+if(!d.success){
+throw new Error(d.error);
+}
+
+config=d;
+
+document.getElementById('eventoBox').innerHTML=`
+<div class="text-slate-400 font-bold text-sm">EVENTO ACTIVO</div>
+<div class="text-2xl font-black text-white">${esc(d.evento.nombre)}</div>
+<div class="text-slate-400">${esc(d.evento.fecha||'')} ${esc(d.evento.hora||'')} · ${esc(d.evento.lugar||'')}</div>
+`;
+
+document.getElementById('categoriaId').innerHTML=d.categorias
+.filter(c=>c.activo)
+.map(c=>`
+<option value="${esc(c.id)}">
+${esc(c.nombre)} · ${dinero(c.precio)} ${c.tipoVenta==='grupo'?'· '+c.boletosPorUnidad+' boletos por '+(c.unidad||'unidad'):''}
+</option>
+`).join('');
+
+renderResumen();
+
+}catch(e){
+document.getElementById('eventoBox').innerHTML=`<div class="text-red-300 font-black">${esc(e.message)}</div>`;
+}
+}
+
+function renderResumen(){
+const c=categoria();
+
+if(!c){
+return;
+}
+
+const cantidad=Math.max(1,Number(document.getElementById('cantidad').value||1));
+const esGrupo=c.tipoVenta==='grupo'||Number(c.boletosPorUnidad)>1;
+const boletos=esGrupo?cantidad*Number(c.boletosPorUnidad||1):cantidad;
+const total=boletos*Number(c.precio||0);
+
+document.getElementById('cantidadLabel').textContent=esGrupo
+? `Cantidad de ${c.unidad||'unidades'}`
+: 'Cantidad de boletos';
+
+const disp=esGrupo
+? (c.disponiblesUnidades===null?'Sin límite':c.disponiblesUnidades)
+: (c.disponiblesBoletos===null?'Sin límite':c.disponiblesBoletos);
+
+document.getElementById('resumen').innerHTML=`
+<div class="card">
+<div class="text-slate-400 text-sm font-black">Categoría</div>
+<div class="text-white text-xl font-black">${esc(c.nombre)}</div>
+<div class="text-slate-400 mt-1">${esc(c.descripcion||'')}</div>
+</div>
+
+<div class="card">
+<div class="text-slate-400 text-sm font-black">${esGrupo?'Unidades a entregar':'Boletos a entregar'}</div>
+<div class="text-white text-3xl font-black">${cantidad}</div>
+</div>
+
+<div class="card">
+<div class="text-slate-400 text-sm font-black">Total de boletos físicos</div>
+<div class="text-white text-3xl font-black">${boletos}</div>
+</div>
+
+<div class="card">
+<div class="text-slate-400 text-sm font-black">Disponible</div>
+<div class="text-green-300 text-3xl font-black">${disp}</div>
+</div>
+
+<div class="card">
+<div class="text-slate-400 text-sm font-black">Importe esperado</div>
+<div class="text-purple-300 text-3xl font-black">${dinero(total)}</div>
+</div>
+`;
+}
+
+async function crearLote(){
+const btn=document.getElementById('btnCrear');
+const out=document.getElementById('resultado');
+const c=categoria();
+
+if(!c){
+alert('Selecciona categoría');
+return;
+}
+
+const puntoVenta=document.getElementById('puntoVenta').value.trim();
+
+if(!puntoVenta){
+alert('Captura el punto de venta');
+return;
+}
+
+const ok=confirm('¿Generar lote físico ACTIVO? Estos boletos quedarán válidos para acceso y apartarán inventario.');
+
+if(!ok){
+return;
+}
+
+try{
+btn.disabled=true;
+btn.textContent='Generando PDFs...';
+out.innerHTML='';
+
+const payload={
+categoriaId:c.id,
+cantidad:Number(document.getElementById('cantidad').value||1),
+puntoVenta,
+responsable:document.getElementById('responsable').value.trim(),
+notas:document.getElementById('notas').value.trim(),
+estadoInicial:'activo'
+};
+
+const r=await fetch(`${API}/api/lotes/crear`,{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify(payload)
+});
+
+const d=await r.json();
+
+if(!d.success){
+throw new Error(d.error);
+}
+
+out.innerHTML=`
+<div class="result">
+<div class="font-black text-lg">Lote generado correctamente</div>
+<div>Lote: <strong>${esc(d.loteId)}</strong></div>
+<div>Punto de venta: <strong>${esc(d.puntoVenta)}</strong></div>
+<div>Boletos: <strong>${d.totalBoletos}</strong></div>
+<div>Importe esperado: <strong>${dinero(d.totalEstimado)}</strong></div>
+</div>
+`+
+d.boletos.map(b=>`
+<div class="result">
+<strong>${esc(b.folio)}</strong>
+<span class="badge badge-green">${esc(b.estado)}</span><br>
+<small>${esc(b.nombre)} · ${esc(b.puntoVenta)}</small>
+<div class="mt-3">
+<a class="btn btn-primary" target="_blank" href="${b.pdfUrl}">Abrir PDF</a>
+</div>
+</div>
+`).join('');
+
+await cargarConfig();
+
+}catch(e){
+alert(e.message);
+}finally{
+btn.disabled=false;
+btn.textContent='Generar lote físico activo';
+}
+}
+
+cargarConfig();
+</script>
+</body>
+</html>

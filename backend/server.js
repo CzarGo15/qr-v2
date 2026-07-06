@@ -13,22 +13,21 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors());
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit:'25mb' }));
+app.use(express.urlencoded({ extended:true }));
 
-app.get('/', (req, res) => {
+app.get('/', (req,res) => {
     res.json({
-        success: true,
-        sistema: 'EXELARIS Tickets API',
-        estado: 'Activo',
-        version: '2.0.0'
+        success:true,
+        sistema:'EXELARIS Tickets API',
+        estado:'Activo'
     });
 });
 
-app.get('/health', (req, res) => {
+app.get('/health', (req,res) => {
     res.json({
-        success: true,
-        message: 'API funcionando'
+        success:true,
+        message:'API funcionando'
     });
 });
 
@@ -37,6 +36,7 @@ app.use('/api/boletos', require('./routes/boletos'));
 app.use('/api/validar', require('./routes/validar'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/compras', require('./routes/compras'));
 
 const PORT = process.env.PORT || 3000;
 

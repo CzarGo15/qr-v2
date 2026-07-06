@@ -2,7 +2,7 @@
 ====================================================
 EXELARIS Tickets
 Archivo: server.js
-Usar este archivo si Render ejecuta "node server.js" desde la raíz.
+Usar este archivo si Render ejecuta "node server.js" desde raíz.
 ====================================================
 */
 
@@ -39,6 +39,8 @@ app.use('/api/upload', require('./backend/routes/upload'));
 app.use('/api/dashboard', require('./backend/routes/dashboard'));
 app.use('/api/compras', require('./backend/routes/compras'));
 app.use('/api/taquilla', require('./backend/routes/taquilla'));
+app.use('/api/lotes', require('./backend/routes/lotes'));
+app.use('/api/acceso', require('./backend/routes/acceso'));
 
 const PORT = process.env.PORT || 3000;
 

@@ -37,6 +37,7 @@ app.use('/api/validar', require('./routes/validar'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/compras', require('./routes/compras'));
+app.use('/api/taquilla', require('./routes/taquilla'));
 
 const PORT = process.env.PORT || 3000;
 

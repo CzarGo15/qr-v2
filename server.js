@@ -34,6 +34,7 @@ app.use('/api/compras', require('./backend/routes/compras'));
 app.use('/api/taquilla', require('./backend/routes/taquilla'));
 app.use('/api/lotes', require('./backend/routes/lotes'));
 app.use('/api/acceso', require('./backend/routes/acceso'));
+app.use('/api/inventario', require('./backend/routes/inventario'));
 
 const PORT = process.env.PORT || 3000;
 

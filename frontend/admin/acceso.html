@@ -8,201 +8,38 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-body{font-family:Poppins,sans-serif;background:#020617;color:#E5E7EB}
-.glass{background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.1);box-shadow:0 24px 80px rgba(0,0,0,.35);backdrop-filter:blur(18px)}
-.input{width:100%;background:#0F172A;border:1px solid rgba(255,255,255,.12);color:white;outline:none;border-radius:18px;padding:14px 16px;font-weight:700}
-.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:16px;padding:12px 16px;font-weight:900;text-decoration:none}
-.btn-primary{background:linear-gradient(135deg,#16A34A,#22C55E);color:white}
-.btn-soft{background:rgba(255,255,255,.08);color:#E5E7EB;border:1px solid rgba(255,255,255,.1)}
-.card{border-radius:28px;padding:28px}.ok{background:#16A34A;color:white}.warn{background:#F59E0B;color:#111827}.bad{background:#DC2626;color:white}
-#reader{border-radius:24px;overflow:hidden;background:white}
+*{box-sizing:border-box}body{font-family:Poppins,sans-serif;background:#020617;color:#E5E7EB}.glass{background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.1);box-shadow:0 24px 80px rgba(0,0,0,.35);backdrop-filter:blur(18px)}.input{width:100%;background:#0F172A;border:1px solid rgba(255,255,255,.12);color:white;outline:none;border-radius:18px;padding:14px 16px;font-weight:700}.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:16px;padding:12px 16px;font-weight:900;text-decoration:none;cursor:pointer}.btn-primary{background:linear-gradient(135deg,#16A34A,#22C55E);color:white}.btn-danger{background:linear-gradient(135deg,#DC2626,#EF4444);color:white}.btn-warning{background:linear-gradient(135deg,#F59E0B,#FACC15);color:#111827}.btn-soft{background:rgba(255,255,255,.08);color:#E5E7EB;border:1px solid rgba(255,255,255,.1)}.card{border-radius:28px;padding:28px}.ok{background:#16A34A;color:white}.warn{background:#F59E0B;color:#111827}.bad{background:#DC2626;color:white}#reader{border-radius:24px;overflow:hidden;background:white;min-height:320px}.modal-backdrop{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.78);padding:18px}.modal-box{width:min(560px,96vw);border-radius:34px;overflow:hidden;box-shadow:0 35px 110px rgba(0,0,0,.55);animation:pop .16s ease-out}@keyframes pop{from{transform:scale(.94);opacity:.65}to{transform:scale(1);opacity:1}}.modal-header{padding:24px;text-align:center}.modal-body{background:white;color:#0F172A;padding:24px}.modal-ok .modal-header{background:linear-gradient(135deg,#16A34A,#22C55E);color:white}.modal-warn .modal-header{background:linear-gradient(135deg,#F59E0B,#FACC15);color:#111827}.modal-bad .modal-header{background:linear-gradient(135deg,#DC2626,#EF4444);color:white}.modal-loading .modal-header{background:linear-gradient(135deg,#2563EB,#7C3AED);color:white}.big-icon{width:82px;height:82px;border-radius:999px;margin:0 auto 14px auto;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.20);font-size:46px;font-weight:900}.data-row{display:flex;justify-content:space-between;gap:14px;border-bottom:1px solid #E5E7EB;padding:10px 0;font-size:14px}.data-row span:first-child{color:#64748B;font-weight:800}.data-row span:last-child{color:#0F172A;font-weight:900;text-align:right}.scan-flash{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0;background:rgba(34,197,94,.28)}.scan-flash.active{animation:flash .35s ease-out}@keyframes flash{0%{opacity:1}100%{opacity:0}}.status-pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;padding:8px 12px;font-weight:900;font-size:13px}.status-idle{background:#1E293B;color:#CBD5E1}.status-scan{background:#DCFCE7;color:#166534}
 </style>
 </head>
 <body>
+<div id="flash" class="scan-flash"></div>
+<div id="modal" class="modal-backdrop">
+  <div id="modalBox" class="modal-box modal-loading">
+    <div class="modal-header"><div id="modalIcon" class="big-icon">⌛</div><div id="modalTitle" class="text-4xl font-black">Verificando</div><div id="modalSubtitle" class="text-lg font-bold mt-2 opacity-90">QR detectado</div></div>
+    <div class="modal-body"><div id="modalContent" class="font-bold text-slate-600">Consultando boleto...</div><div id="modalActions" class="flex flex-col sm:flex-row gap-3 mt-6"></div></div>
+  </div>
+</div>
 <main class="max-w-5xl mx-auto px-5 py-8">
-<header class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-<div>
-<div class="text-sm tracking-[.28em] text-green-300 font-bold">EXELARIS ACCESO</div>
-<h1 class="text-4xl lg:text-5xl font-black text-white mt-2">Validar entrada</h1>
-<p class="text-slate-400 mt-3">Escanea el QR en la puerta del evento.</p>
-</div>
-<div class="flex gap-3 flex-wrap">
-<a class="btn btn-soft" href="lotes.html">Lotes físicos</a>
-<a class="btn btn-soft" href="compras.html">Compras</a>
-</div>
-</header>
-
-<section class="grid lg:grid-cols-[420px_1fr] gap-6">
-<div class="glass rounded-3xl p-6">
-<h2 class="text-2xl font-black mb-4">Scanner</h2>
-<div id="reader"></div>
-<div class="mt-4 flex gap-3 flex-wrap">
-<button class="btn btn-primary" onclick="iniciarCamara()">Iniciar cámara</button>
-<button class="btn btn-soft" onclick="detenerCamara()">Detener</button>
-</div>
-<div class="mt-6">
-<input id="codigo" class="input" placeholder="UUID o folio">
-<button class="btn btn-primary w-full mt-3" onclick="buscar()">Buscar boleto</button>
-</div>
-<div class="mt-4">
-<input id="validador" class="input" value="Validador 1" placeholder="Nombre del validador">
-</div>
-</div>
-
-<div class="glass rounded-3xl p-6">
-<h2 class="text-2xl font-black mb-4">Resultado</h2>
-<div id="resultado" class="text-slate-400 font-bold">Escanea o captura un código.</div>
-</div>
-</section>
+<header class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5"><div><div class="text-sm tracking-[.28em] text-green-300 font-bold">EXELARIS ACCESO</div><h1 class="text-4xl lg:text-5xl font-black text-white mt-2">Validar entrada</h1><p class="text-slate-400 mt-3">Escanea el QR en la puerta del evento. El resultado aparece en ventana emergente.</p></div><div class="flex gap-3 flex-wrap"><a class="btn btn-soft" href="lotes.html">Lotes físicos</a><a class="btn btn-soft" href="compras.html">Compras</a></div></header>
+<section class="grid lg:grid-cols-[420px_1fr] gap-6"><div class="glass rounded-3xl p-6"><div class="flex items-center justify-between gap-3 mb-4"><h2 class="text-2xl font-black">Scanner</h2><div id="scannerStatus" class="status-pill status-idle">Cámara apagada</div></div><div id="reader"></div><div class="mt-4 flex gap-3 flex-wrap"><button class="btn btn-primary" onclick="iniciarCamara()">Iniciar cámara</button><button class="btn btn-soft" onclick="detenerCamara()">Detener</button></div><div class="mt-6"><input id="codigo" class="input" placeholder="UUID o folio"><button class="btn btn-primary w-full mt-3" onclick="buscarManual()">Buscar boleto</button></div><div class="mt-4"><input id="validador" class="input" value="Validador 1" placeholder="Nombre del validador"></div></div><div class="glass rounded-3xl p-6"><h2 class="text-2xl font-black mb-4">Último resultado</h2><div id="resultado" class="text-slate-400 font-bold">Escanea o captura un código.</div></div></section>
 </main>
-
 <script>
-const API='https://fiestaretro-api.onrender.com';
-let scanner=null;
-let ultimo=null;
-let bloqueado=false;
-
-function esc(t){
-return String(t||'')
-.replaceAll('&','&amp;')
-.replaceAll('<','&lt;')
-.replaceAll('>','&gt;')
-.replaceAll('"','&quot;')
-.replaceAll("'","&#039;");
-}
-
-async function iniciarCamara(){
-if(scanner){
-return;
-}
-
-scanner=new Html5Qrcode('reader');
-
-await scanner.start(
-{facingMode:'environment'},
-{fps:10,qrbox:{width:250,height:250}},
-txt=>{
-if(bloqueado){
-return;
-}
-bloqueado=true;
-document.getElementById('codigo').value=txt;
-buscar().finally(()=>setTimeout(()=>bloqueado=false,1800));
-},
-()=>{}
-);
-}
-
-async function detenerCamara(){
-if(scanner){
-await scanner.stop().catch(()=>{});
-scanner.clear();
-scanner=null;
-}
-}
-
-async function buscar(){
-const codigo=document.getElementById('codigo').value.trim();
-
-if(!codigo){
-alert('Captura código');
-return;
-}
-
-const out=document.getElementById('resultado');
-out.innerHTML='Buscando...';
-
-try{
-const r=await fetch(`${API}/api/acceso/buscar`,{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({codigo})
-});
-
-const d=await r.json();
-
-if(!d.success){
-throw new Error(d.error);
-}
-
-ultimo=d;
-
-const b=d.boleto;
-const a=d.acceso;
-const cls=a.permitido?'ok':'warn';
-
-out.innerHTML=`
-<div class="card ${cls}">
-<div class="text-4xl font-black">${a.permitido?'VÁLIDO':'REVISAR'}</div>
-<div class="text-xl font-black mt-3">${esc(a.mensaje)}</div>
-
-<div class="mt-4 text-lg">Folio: <strong>${esc(b.folio)}</strong></div>
-<div>Tipo: <strong>${esc(b.categoriaNombre||b.tipo)}</strong></div>
-<div>Nombre: <strong>${esc(b.nombre)}</strong></div>
-
-${b.loteId?`<div>Lote: <strong>${esc(b.loteId)}</strong></div>`:''}
-${b.puntoVenta?`<div>Punto de venta: <strong>${esc(b.puntoVenta)}</strong></div>`:''}
-${b.responsable?`<div>Responsable: <strong>${esc(b.responsable)}</strong></div>`:''}
-${b.grupoId?`<div>Grupo: <strong>${esc(b.grupoId)}</strong></div>`:''}
-
-${a.permitido?`<button class="btn btn-primary mt-6 w-full" onclick="confirmar()">Confirmar acceso</button>`:''}
-</div>
-`;
-
-}catch(e){
-out.innerHTML=`
-<div class="card bad">
-<div class="text-4xl font-black">NO VÁLIDO</div>
-<div class="text-xl mt-3">${esc(e.message)}</div>
-</div>
-`;
-}
-}
-
-async function confirmar(){
-if(!ultimo?.boleto){
-return;
-}
-
-try{
-const codigo=ultimo.boleto.uuid;
-const validadoPor=document.getElementById('validador').value.trim()||'Validador';
-
-const r=await fetch(`${API}/api/acceso/confirmar`,{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({
-codigo,
-validadoPor,
-puerta:'Acceso principal'
-})
-});
-
-const d=await r.json();
-
-if(!d.success){
-throw new Error(d.error);
-}
-
-document.getElementById('resultado').innerHTML=`
-<div class="card ok">
-<div class="text-5xl font-black">ACCESO CONFIRMADO</div>
-<div class="text-xl mt-4">${esc(d.boleto.folio)} · ${esc(d.boleto.categoriaNombre)}</div>
-${d.boleto.puntoVenta?`<div class="text-lg mt-2">Punto de venta: <strong>${esc(d.boleto.puntoVenta)}</strong></div>`:''}
-</div>
-`;
-
-document.getElementById('codigo').value='';
-
-}catch(e){
-document.getElementById('resultado').innerHTML=`
-<div class="card bad">
-<div class="text-4xl font-black">ERROR</div>
-<div class="text-xl mt-3">${esc(e.message)}</div>
-</div>
-`;
-}
-}
+const API='https://fiestaretro-api.onrender.com';let scanner=null,ultimo=null,bloqueado=false,ultimoCodigo='',ultimoTimestamp=0;
+function esc(t){return String(t||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;")}
+function setScannerStatus(activo){const s=document.getElementById('scannerStatus');s.className=activo?'status-pill status-scan':'status-pill status-idle';s.textContent=activo?'Cámara activa':'Cámara apagada'}
+function beep(tipo='ok'){try{const C=window.AudioContext||window.webkitAudioContext,ctx=new C(),o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=tipo==='ok'?880:(tipo==='bad'?220:520);o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(.001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.25,ctx.currentTime+.02);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.18);o.start(ctx.currentTime);o.stop(ctx.currentTime+.2)}catch(e){}}
+function vibrar(tipo='ok'){if(!navigator.vibrate)return;navigator.vibrate(tipo==='ok'?[80]:(tipo==='bad'?[180,80,180]:[80,60,80]))}
+function flash(){const f=document.getElementById('flash');f.classList.remove('active');void f.offsetWidth;f.classList.add('active')}
+function abrirModal(tipo,title,subtitle,content,actions=''){const m=document.getElementById('modal'),b=document.getElementById('modalBox'),i=document.getElementById('modalIcon');b.className='modal-box '+tipo;i.textContent=tipo==='modal-ok'?'✓':(tipo==='modal-loading'?'⌛':'!');document.getElementById('modalTitle').textContent=title;document.getElementById('modalSubtitle').textContent=subtitle;document.getElementById('modalContent').innerHTML=content;document.getElementById('modalActions').innerHTML=actions;m.style.display='flex'}
+function cerrarModal(){document.getElementById('modal').style.display='none'}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')cerrarModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarModal()});
+async function iniciarCamara(){if(scanner)return;scanner=new Html5Qrcode('reader');await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:250,height:250}},txt=>procesarEscaneo(txt),()=>{});setScannerStatus(true)}
+async function detenerCamara(){if(scanner){await scanner.stop().catch(()=>{});scanner.clear();scanner=null}setScannerStatus(false)}
+async function procesarEscaneo(txt){const codigo=String(txt||'').trim();if(!codigo)return;const ahora=Date.now();if(codigo===ultimoCodigo&&ahora-ultimoTimestamp<3500)return;if(bloqueado)return;ultimoCodigo=codigo;ultimoTimestamp=ahora;bloqueado=true;document.getElementById('codigo').value=codigo;flash();beep('scan');vibrar('scan');abrirModal('modal-loading','QR detectado','Verificando boleto...','<div class="text-center py-5">Consultando información del boleto.</div>');await buscar(codigo);setTimeout(()=>{bloqueado=false},1800)}
+async function buscarManual(){const codigo=document.getElementById('codigo').value.trim();if(!codigo){alert('Captura código');return}abrirModal('modal-loading','Buscando','Verificando boleto...','<div class="text-center py-5">Consultando información del boleto.</div>');await buscar(codigo)}
+function renderDatosBoleto(b){return `<div class="data-row"><span>Folio</span><span>${esc(b.folio)}</span></div><div class="data-row"><span>Tipo</span><span>${esc(b.categoriaNombre||b.tipo)}</span></div><div class="data-row"><span>Nombre</span><span>${esc(b.nombre)}</span></div>${b.loteId?`<div class="data-row"><span>Lote</span><span>${esc(b.loteId)}</span></div>`:''}${b.puntoVenta?`<div class="data-row"><span>Punto de venta</span><span>${esc(b.puntoVenta)}</span></div>`:''}${b.responsable?`<div class="data-row"><span>Responsable</span><span>${esc(b.responsable)}</span></div>`:''}${b.grupoId?`<div class="data-row"><span>Grupo</span><span>${esc(b.grupoId)}</span></div>`:''}`}
+async function buscar(codigo){const out=document.getElementById('resultado');out.innerHTML='Buscando...';try{const r=await fetch(`${API}/api/acceso/buscar`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo})});const d=await r.json();if(!d.success)throw new Error(d.error);ultimo=d;const b=d.boleto,a=d.acceso;if(a.permitido){beep('ok');vibrar('ok');abrirModal('modal-ok','VÁLIDO',a.mensaje,renderDatosBoleto(b),`<button class="btn btn-primary flex-1" onclick="confirmar()">Confirmar acceso</button><button class="btn btn-soft flex-1" onclick="cerrarModal()">Cerrar</button>`);out.innerHTML=`<div class="card ok"><div class="text-4xl font-black">VÁLIDO</div><div class="text-xl font-black mt-3">${esc(a.mensaje)}</div><div class="mt-4 text-lg">Folio: <strong>${esc(b.folio)}</strong></div><div>Tipo: <strong>${esc(b.categoriaNombre||b.tipo)}</strong></div>${b.puntoVenta?`<div>Punto de venta: <strong>${esc(b.puntoVenta)}</strong></div>`:''}<button class="btn btn-primary mt-6 w-full" onclick="confirmar()">Confirmar acceso</button></div>`}else{beep('bad');vibrar('bad');abrirModal('modal-warn','REVISAR',a.mensaje,renderDatosBoleto(b),`<button class="btn btn-warning flex-1" onclick="cerrarModal()">Entendido</button>`);out.innerHTML=`<div class="card warn"><div class="text-4xl font-black">REVISAR</div><div class="text-xl font-black mt-3">${esc(a.mensaje)}</div><div class="mt-4 text-lg">Folio: <strong>${esc(b.folio)}</strong></div><div>Tipo: <strong>${esc(b.categoriaNombre||b.tipo)}</strong></div>${b.puntoVenta?`<div>Punto de venta: <strong>${esc(b.puntoVenta)}</strong></div>`:''}</div>`}}catch(e){beep('bad');vibrar('bad');abrirModal('modal-bad','NO VÁLIDO','No se pudo validar el boleto',`<div class="text-center"><div class="text-xl font-black text-red-700">${esc(e.message)}</div><div class="text-slate-500 mt-3">Verifica que el QR o folio sea correcto.</div></div>`,`<button class="btn btn-danger flex-1" onclick="cerrarModal()">Cerrar</button>`);out.innerHTML=`<div class="card bad"><div class="text-4xl font-black">NO VÁLIDO</div><div class="text-xl mt-3">${esc(e.message)}</div></div>`}}
+async function confirmar(){if(!ultimo?.boleto)return;try{abrirModal('modal-loading','Confirmando','Registrando acceso...','<div class="text-center py-5">Guardando validación.</div>');const codigo=ultimo.boleto.uuid,validadoPor=document.getElementById('validador').value.trim()||'Validador';const r=await fetch(`${API}/api/acceso/confirmar`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo,validadoPor,puerta:'Acceso principal'})});const d=await r.json();if(!d.success)throw new Error(d.error);beep('ok');vibrar('ok');abrirModal('modal-ok','ACCESO CONFIRMADO','Entrada registrada correctamente',`<div class="text-center"><div class="text-2xl font-black text-slate-900">${esc(d.boleto.folio)} · ${esc(d.boleto.categoriaNombre)}</div>${d.boleto.puntoVenta?`<div class="text-lg mt-2">Punto de venta: <strong>${esc(d.boleto.puntoVenta)}</strong></div>`:''}</div>`,`<button class="btn btn-primary flex-1" onclick="cerrarModal()">Continuar escaneando</button>`);document.getElementById('resultado').innerHTML=`<div class="card ok"><div class="text-5xl font-black">ACCESO CONFIRMADO</div><div class="text-xl mt-4">${esc(d.boleto.folio)} · ${esc(d.boleto.categoriaNombre)}</div>${d.boleto.puntoVenta?`<div class="text-lg mt-2">Punto de venta: <strong>${esc(d.boleto.puntoVenta)}</strong></div>`:''}</div>`;document.getElementById('codigo').value='';ultimo=null}catch(e){beep('bad');vibrar('bad');abrirModal('modal-bad','ERROR','No se pudo confirmar',`<div class="text-center"><div class="text-xl font-black text-red-700">${esc(e.message)}</div></div>`,`<button class="btn btn-danger flex-1" onclick="cerrarModal()">Cerrar</button>`);document.getElementById('resultado').innerHTML=`<div class="card bad"><div class="text-4xl font-black">ERROR</div><div class="text-xl mt-3">${esc(e.message)}</div></div>`}}
 </script>
 </body>
 </html>

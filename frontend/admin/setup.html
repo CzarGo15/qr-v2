@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EXELARIS Admin | Primera instalación</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box}body{font-family:Poppins,sans-serif;background:#020617;color:#E5E7EB}.glass{background:rgba(15,23,42,.90);border:1px solid rgba(255,255,255,.12);box-shadow:0 28px 90px rgba(0,0,0,.45);backdrop-filter:blur(18px)}.input{width:100%;background:#0F172A;border:1px solid rgba(255,255,255,.14);color:white;outline:none;border-radius:18px;padding:14px 16px;font-weight:800}.label{display:block;color:#CBD5E1;font-size:13px;font-weight:900;margin-bottom:8px}.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:16px;padding:12px 16px;font-weight:900;text-decoration:none}.btn-primary{background:linear-gradient(135deg,#7C3AED,#2563EB);color:white}.btn-soft{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:#E5E7EB}.msg{border-radius:16px;padding:12px 14px;font-weight:800}.ok{background:#DCFCE7;color:#166534}.bad{background:#FEE2E2;color:#991B1B}</style>
+</head>
+<body>
+<main class="min-h-screen flex items-center justify-center p-5">
+<div class="glass rounded-[32px] p-7 w-full max-w-lg">
+<div class="text-sm tracking-[.28em] text-purple-300 font-bold">EXELARIS SETUP</div>
+<h1 class="text-4xl font-black text-white mt-2">Primer administrador</h1>
+<p class="text-slate-400 mt-2">Solo funciona si todavía no existe ningún usuario admin.</p>
+<div class="mt-7 space-y-4">
+<div><label class="label">Clave de instalación</label><input id="setupKey" class="input" placeholder="ADMIN_SETUP_KEY de Render"></div>
+<div><label class="label">Nombre</label><input id="nombre" class="input" value="Administrador"></div>
+<div><label class="label">Usuario</label><input id="usuario" class="input" value="admin"></div>
+<div><label class="label">Correo</label><input id="correo" class="input" placeholder="correo@dominio.com"></div>
+<div><label class="label">Contraseña</label><input id="password" type="password" class="input" placeholder="Nueva contraseña"></div>
+<button id="btn" onclick="crear()" class="btn btn-primary w-full">Crear administrador</button>
+<a href="login.html" class="btn btn-soft w-full">Volver al login</a>
+<div id="msg"></div>
+</div>
+</div>
+</main>
+<script>
+const API='https://fiestaretro-api.onrender.com';
+function show(text,ok=false){document.getElementById('msg').innerHTML=`<div class="msg ${ok?'ok':'bad'}">${text}</div>`}
+async function crear(){
+const body={setupKey:setupKey.value.trim(),nombre:nombre.value.trim(),usuario:usuario.value.trim(),correo:correo.value.trim(),password:password.value.trim()};
+try{btn.disabled=true;btn.textContent='Creando...';const r=await fetch(`${API}/api/auth/bootstrap`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!d.success)throw new Error(d.error);localStorage.setItem('exelaris_admin_token',d.token);localStorage.setItem('exelaris_admin_user',JSON.stringify(d.user));location.href='inventario.html'}catch(e){show(e.message)}finally{btn.disabled=false;btn.textContent='Crear administrador'}
+}
+</script>
+</body>
+</html>

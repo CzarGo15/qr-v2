@@ -17,18 +17,11 @@ app.use(express.json({ limit:'25mb' }));
 app.use(express.urlencoded({ extended:true }));
 
 app.get('/', (req,res) => {
-    res.json({
-        success:true,
-        sistema:'EXELARIS Tickets API',
-        estado:'Activo'
-    });
+    res.json({ success:true, sistema:'EXELARIS Tickets API', estado:'Activo' });
 });
 
 app.get('/health', (req,res) => {
-    res.json({
-        success:true,
-        message:'API funcionando'
-    });
+    res.json({ success:true, message:'API funcionando' });
 });
 
 app.use('/api/eventos', require('./routes/eventos'));

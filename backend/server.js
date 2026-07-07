@@ -33,6 +33,7 @@ app.use('/api/compras', require('./routes/compras'));
 app.use('/api/taquilla', require('./routes/taquilla'));
 app.use('/api/lotes', require('./routes/lotes'));
 app.use('/api/acceso', require('./routes/acceso'));
+app.use('/api/inventario', require('./routes/inventario'));
 
 const PORT = process.env.PORT || 3000;
 

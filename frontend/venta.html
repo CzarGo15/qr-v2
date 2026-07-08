@@ -17,7 +17,50 @@
 </main>
 <script>
 const API='https://fiestaretro-api.onrender.com';let config=null,cantidades={},asistentes=[];function dinero(v){return Number(v||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0})}function esc(t){return String(t||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;")}function esGrupo(c){return c.tipoVenta==='grupo'||Number(c.boletosPorUnidad)>1}function getCats(){return config?.categorias||[]}async function cargar(){try{const r=await fetch(`${API}/api/boletos/config`),d=await r.json();if(!d.success)throw new Error(d.error);config=d;getCats().forEach(c=>cantidades[c.id]=0);document.getElementById('eventoNombre').textContent=d.evento.nombre;document.getElementById('eventoInfo').textContent=`${d.evento.fecha||''} · ${d.evento.hora||''} · ${d.evento.lugar||''} · ${d.evento.ciudad||''}`;if(d.evento.flyer){document.getElementById('flyerBox').innerHTML=`<img src="${d.evento.flyer}" class="w-full h-full object-cover">`;}renderCategorias();renderResumen();renderAsistentes();}catch(e){document.getElementById('eventoNombre').textContent=e.message}}
-function disponibilidadTexto(c){if(esGrupo(c)){return c.disponiblesUnidades===null?'Disponible':`${c.disponiblesUnidades} ${c.unidad||'unidades'} disponibles`;}return c.disponiblesBoletos===null?'Disponible':`${c.disponiblesBoletos} boletos disponibles`;}
+function esGeneral(c){
+    return String(c.id || '').toLowerCase() === 'general' ||
+           String(c.nombre || '').toLowerCase().includes('general');
+}
+
+function disponibilidadTexto(c){
+    /*
+    General:
+    No mostrar cantidad exacta de boletos disponibles.
+    */
+    if(esGeneral(c)){
+        if(c.disponiblesBoletos !== null && Number(c.disponiblesBoletos) <= 0){
+            return 'Agotado';
+        }
+
+        return 'Disponible';
+    }
+
+    /*
+    VIP 1 / VIP 2:
+    Sí mostrar cuántas periqueras o salas quedan.
+    */
+    if(esGrupo(c)){
+        if(c.disponiblesUnidades !== null && Number(c.disponiblesUnidades) <= 0){
+            return `${c.unidad || 'unidades'} agotadas`;
+        }
+
+        return c.disponiblesUnidades === null
+            ? 'Disponible'
+            : `${c.disponiblesUnidades} ${c.unidad || 'unidades'} disponibles`;
+    }
+
+    /*
+    Cualquier otra categoría individual futura.
+    */
+    if(c.disponiblesBoletos !== null && Number(c.disponiblesBoletos) <= 0){
+        return 'Agotado';
+    }
+
+    return c.disponiblesBoletos === null
+        ? 'Disponible'
+        : `${c.disponiblesBoletos} boletos disponibles`;
+}
+
 function renderCategorias(){document.getElementById('categorias').innerHTML=getCats().filter(c=>c.activo).map(c=>{const grupo=esGrupo(c),label=grupo?`${c.unidad||'Unidad'} completa`:'Boleto individual',totalUnidad=grupo?Number(c.boletosPorUnidad||1)*Number(c.precio||0):Number(c.precio||0);return `<div class="ticket-card"><div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><div class="flex gap-2 items-center flex-wrap"><h3 class="text-2xl font-black text-white">${esc(c.nombre)}</h3><span class="badge ${grupo?'badge-yellow':'badge-blue'}">${esc(label)}</span></div><p class="text-slate-400 mt-1">${esc(c.descripcion||'')}</p><div class="text-slate-300 font-bold mt-2">${dinero(c.precio)} por persona ${grupo?`· ${dinero(totalUnidad)} por ${esc(c.unidad)}`:''}</div><div class="text-green-300 font-black mt-1">${esc(disponibilidadTexto(c))}</div></div><div class="flex items-center gap-3"><button class="counter-btn" onclick="cambiar('${esc(c.id)}',-1)">-</button><div id="cant_${esc(c.id)}" class="counter-value">${cantidades[c.id]||0}</div><button class="counter-btn" onclick="cambiar('${esc(c.id)}',1)">+</button></div></div></div>`}).join('')}
 function cambiar(id,delta){const c=getCats().find(x=>x.id===id);if(!c)return;let nuevo=Math.max(0,Number(cantidades[id]||0)+delta);if(esGrupo(c)&&c.disponiblesUnidades!==null&&nuevo>c.disponiblesUnidades){alert(`Solo quedan ${c.disponiblesUnidades} ${c.unidad}`);return}if(!esGrupo(c)&&c.disponiblesBoletos!==null&&nuevo>c.disponiblesBoletos){alert(`Solo quedan ${c.disponiblesBoletos} boletos`);return}cantidades[id]=nuevo;document.getElementById(`cant_${id}`).textContent=nuevo;renderResumen();renderAsistentes()}
 function generarSlots(){const slots=[];getCats().forEach(c=>{const cant=Number(cantidades[c.id]||0);if(cant<=0)return;if(esGrupo(c)){for(let u=1;u<=cant;u++){for(let p=1;p<=Number(c.boletosPorUnidad||1);p++){slots.push({categoriaId:c.id,categoriaNombre:c.nombre,label:`${c.nombre} · ${c.unidad} ${u} · Lugar ${p}/${c.boletosPorUnidad}`})}}}else{for(let i=1;i<=cant;i++)slots.push({categoriaId:c.id,categoriaNombre:c.nombre,label:`${c.nombre} · Boleto ${i}`})}});return slots}

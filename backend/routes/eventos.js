@@ -1,226 +1,30 @@
-const express = require('express');
-const db = require('../firebase');
-
-const router = express.Router();
-
-/*
-==================================
-LISTAR EVENTOS
-GET /api/eventos
-==================================
-*/
-
-router.get('/', async (req, res) => {
-
-    try {
-
-        const snapshot =
-            await db
-                .collection('eventos')
-                .get();
-
-        const eventos = [];
-
-        snapshot.forEach(doc => {
-
-            eventos.push({
-
-                id: doc.id,
-
-                ...doc.data()
-
-            });
-
-        });
-
-        res.json(eventos);
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-
-            success: false,
-            error: error.message
-
-        });
-
-    }
-
-});
-
-/*
-==================================
-OBTENER EVENTO
-GET /api/eventos/:id
-==================================
-*/
-
-router.get('/:id', async (req, res) => {
-
-    try {
-
-        const doc =
-            await db
-                .collection('eventos')
-                .doc(req.params.id)
-                .get();
-
-        if (!doc.exists) {
-
-            return res.status(404).json({
-
-                success: false,
-                error: 'Evento no encontrado'
-
-            });
-
-        }
-
-        res.json({
-
-            id: doc.id,
-
-            ...doc.data()
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-
-            success: false,
-            error: error.message
-
-        });
-
-    }
-
-});
-
-/*
-==================================
-CREAR EVENTO
-POST /api/eventos
-==================================
-*/
-
-router.post('/', async (req, res) => {
-
-    try {
-
-        const evento = {
-
-            ...req.body,
-
-            fechaCreacion:
-                new Date()
-
-        };
-
-        const docRef =
-            await db
-                .collection('eventos')
-                .add(evento);
-
-        res.json({
-
-            success: true,
-
-            id: docRef.id
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-
-            success: false,
-            error: error.message
-
-        });
-
-    }
-
-});
-
-/*
-==================================
-ACTUALIZAR EVENTO
-PUT /api/eventos/:id
-==================================
-*/
-
-router.put('/:id', async (req, res) => {
-
-    try {
-
-        await db
-            .collection('eventos')
-            .doc(req.params.id)
-            .update(req.body);
-
-        res.json({
-
-            success: true
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-
-            success: false,
-            error: error.message
-
-        });
-
-    }
-
-});
-
-/*
-==================================
-ELIMINAR EVENTO
-DELETE /api/eventos/:id
-==================================
-*/
-
-router.delete('/:id', async (req, res) => {
-
-    try {
-
-        await db
-            .collection('eventos')
-            .doc(req.params.id)
-            .delete();
-
-        res.json({
-
-            success: true
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-
-            success: false,
-            error: error.message
-
-        });
-
-    }
-
-});
-
-module.exports = router;
+/* EXELARIS Tickets - backend/routes/eventos.js */
+const express=require('express');
+const db=require('../firebase');
+const router=express.Router();
+
+function ser(v){if(!v)return v;if(typeof v.toDate==='function')return v.toDate().toISOString();if(Array.isArray(v))return v.map(ser);if(typeof v==='object'){const o={};Object.keys(v).forEach(k=>o[k]=ser(v[k]));return o;}return v;}
+function n(v,d=0){const x=Number(v);return Number.isFinite(x)?x:d;}
+function b(v,d=true){if(v===undefined||v===null||v==='')return d;if(typeof v==='boolean')return v;return ['true','1','si','sí'].includes(String(v).toLowerCase());}
+function idClean(s){return String(s||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');}
+function slug(s){const x=String(s||'evento').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');return `${x||'evento'}_${Date.now().toString().slice(-6)}`;}
+function esGrupo(c){return c.tipoVenta==='grupo'||n(c.boletosPorUnidad,1)>1;}
+function limpiarCats(input={},actual={},reset=false){const out={};Object.keys(input||{}).forEach(k=>{const id=idClean(k);if(!id)return;const c=input[k]||{};const ant=actual[id]||{};const bpu=Math.max(1,n(c.boletosPorUnidad,1));const tipo=(c.tipoVenta==='grupo'||bpu>1)?'grupo':'individual';let cupo=Math.max(0,n(c.cupoTotal,0));let unidades=tipo==='grupo'?Math.max(0,n(c.unidadesTotal,Math.floor(cupo/bpu))):null;if(tipo==='grupo')cupo=unidades*bpu;out[id]={nombre:String(c.nombre||id).trim(),descripcion:String(c.descripcion||'').trim(),precio:Math.max(0,n(c.precio,0)),tipoVenta:tipo,unidad:String(c.unidad||(tipo==='grupo'?'Unidad':'Boleto')).trim(),boletosPorUnidad:bpu,cupoTotal:cupo,vendidos:reset?0:n(ant.vendidos,n(c.vendidos,0)),activo:b(c.activo,true),orden:n(c.orden,0)};if(tipo==='grupo'){out[id].unidadesTotal=unidades;out[id].unidadesVendidas=reset?0:n(ant.unidadesVendidas,n(c.unidadesVendidas,0));out[id].prefijoGrupo=String(c.prefijoGrupo||id.slice(0,3)).trim().toUpperCase();}});return out;}
+function validarCats(cats){const ids=Object.keys(cats||{});if(!ids.length)return 'Debes agregar al menos una categoría';for(const id of ids){const c=cats[id];if(!c.nombre)return `La categoría ${id} no tiene nombre`;if(c.cupoTotal<=0)return `La categoría ${c.nombre} debe tener cupo mayor a cero`;if(c.precio<0)return `La categoría ${c.nombre} tiene precio inválido`;if(esGrupo(c)&&c.unidadesTotal*c.boletosPorUnidad!==c.cupoTotal)return `En ${c.nombre}, cupoTotal debe ser unidadesTotal x boletosPorUnidad`; }return null;}
+function legacy(e){if(e.categorias?.general)e.precioGeneral=n(e.categorias.general.precio);if(e.categorias?.vip1)e.precioVIP=n(e.categorias.vip1.precio);return e;}
+async function activo(){const s=await db.collection('eventos').where('activo','==',true).limit(1).get();if(s.empty)return null;const d=s.docs[0];return {id:d.id,...ser(d.data())};}
+function preparar(body={},actual={},reset=false){const cats=limpiarCats(body.categorias||{},actual.categorias||{},reset);const err=validarCats(cats);if(err)throw new Error(err);const e={nombre:String(body.nombre||'').trim(),descripcion:String(body.descripcion||'').trim(),fecha:String(body.fecha||'').trim(),hora:String(body.hora||'').trim(),lugar:String(body.lugar||'').trim(),direccion:String(body.direccion||'').trim(),ciudad:String(body.ciudad||'').trim(),flyer:String(body.flyer||'').trim(),activo:b(body.activo,false),categorias:cats,actualizadoEn:new Date()};if(!e.nombre)throw new Error('Nombre del evento es obligatorio');if(!e.fecha)throw new Error('Fecha del evento es obligatoria');if(!e.lugar)throw new Error('Lugar del evento es obligatorio');return legacy(e);}
+async function conteos(eventoId){const [c,b,l]=await Promise.all([db.collection('compras').where('eventoId','==',eventoId).get(),db.collection('boletos').where('eventoId','==',eventoId).get(),db.collection('lotes').where('eventoId','==',eventoId).get()]);return {compras:c.size,boletos:b.size,lotes:l.size};}
+async function desactivarOtros(exceptId,batch){const s=await db.collection('eventos').where('activo','==',true).get();s.docs.forEach(d=>{if(d.id!==exceptId)batch.update(d.ref,{activo:false,actualizadoEn:new Date()});});}
+
+router.get('/',async(req,res)=>{try{const e=await activo();if(!e)return res.status(404).json({success:false,error:'No existe evento activo'});res.json({success:true,evento:e});}catch(error){res.status(500).json({success:false,error:error.message});}});
+router.get('/activo',async(req,res)=>{try{const e=await activo();if(!e)return res.status(404).json({success:false,error:'No existe evento activo'});res.json({success:true,evento:e});}catch(error){res.status(500).json({success:false,error:error.message});}});
+router.get('/admin/listar',async(req,res)=>{try{const s=await db.collection('eventos').get();const arr=[];for(const d of s.docs){arr.push({id:d.id,...ser(d.data()),conteos:await conteos(d.id)});}arr.sort((a,b)=>(b.activo?1:0)-(a.activo?1:0)||String(b.fecha||'').localeCompare(String(a.fecha||'')));res.json({success:true,eventos:arr});}catch(error){res.status(500).json({success:false,error:error.message});}});
+router.get('/admin/:id',async(req,res)=>{try{const d=await db.collection('eventos').doc(req.params.id).get();if(!d.exists)return res.status(404).json({success:false,error:'Evento no encontrado'});res.json({success:true,evento:{id:d.id,...ser(d.data()),conteos:await conteos(d.id)}});}catch(error){res.status(500).json({success:false,error:error.message});}});
+router.post('/admin/crear',async(req,res)=>{try{const e=preparar(req.body||{}, {}, true);e.creadoEn=new Date();const id=idClean(req.body?.id)||slug(e.nombre);const ref=db.collection('eventos').doc(id);if((await ref.get()).exists)return res.status(400).json({success:false,error:'Ya existe un evento con ese ID'});if(e.activo){const batch=db.batch();await desactivarOtros(id,batch);batch.set(ref,e);await batch.commit();}else await ref.set(e);res.json({success:true,evento:{id,...ser(e)}});}catch(error){res.status(500).json({success:false,error:error.message});}});
+router.put('/admin/:id',async(req,res)=>{try{const ref=db.collection('eventos').doc(req.params.id);const d=await ref.get();if(!d.exists)return res.status(404).json({success:false,error:'Evento no encontrado'});const e=preparar(req.body||{},d.data(),false);e.activo=d.data().activo===true;await ref.set(e,{merge:true});res.json({success:true,evento:{id:ref.id,...ser((await ref.get()).data())}});}catch(error){res.status(500).json({success:false,error:error.message});}});
+router.post('/admin/:id/activar',async(req,res)=>{try{const ref=db.collection('eventos').doc(req.params.id);if(!(await ref.get()).exists)return res.status(404).json({success:false,error:'Evento no encontrado'});const batch=db.batch();await desactivarOtros(req.params.id,batch);batch.update(ref,{activo:true,actualizadoEn:new Date()});await batch.commit();res.json({success:true,message:'Evento activado'});}catch(error){res.status(500).json({success:false,error:error.message});}});
+router.post('/admin/:id/desactivar',async(req,res)=>{try{await db.collection('eventos').doc(req.params.id).update({activo:false,actualizadoEn:new Date()});res.json({success:true,message:'Evento desactivado'});}catch(error){res.status(500).json({success:false,error:error.message});}});
+router.post('/admin/:id/duplicar',async(req,res)=>{try{const ref=db.collection('eventos').doc(req.params.id);const d=await ref.get();if(!d.exists)return res.status(404).json({success:false,error:'Evento no encontrado'});const o=d.data();const nombre=req.body?.nombre||`${o.nombre||'Evento'} copia`;const id=idClean(req.body?.id)||slug(nombre);const nvo={...o,nombre,fecha:req.body?.fecha||o.fecha||'',activo:false,categorias:limpiarCats(o.categorias||{}, {}, true),creadoEn:new Date(),actualizadoEn:new Date(),duplicadoDe:req.params.id};await db.collection('eventos').doc(id).set(legacy(nvo));res.json({success:true,evento:{id,...ser(nvo)}});}catch(error){res.status(500).json({success:false,error:error.message});}});
+router.delete('/admin/:id',async(req,res)=>{try{const c=await conteos(req.params.id);if(c.compras||c.boletos||c.lotes)return res.status(400).json({success:false,error:'No se puede eliminar un evento con compras, boletos o lotes. Puedes desactivarlo.'});await db.collection('eventos').doc(req.params.id).delete();res.json({success:true,message:'Evento eliminado'});}catch(error){res.status(500).json({success:false,error:error.message});}});
+module.exports=router;

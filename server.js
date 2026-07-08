@@ -38,8 +38,10 @@ app.use('/api/dashboard', require('./backend/routes/dashboard'));
 app.use('/api/compras', require('./backend/routes/compras'));
 app.use('/api/taquilla', require('./backend/routes/taquilla'));
 app.use('/api/lotes', require('./backend/routes/lotes'));
+app.use('/api/lotes-impresion', require('./backend/routes/lotesImpresion'));
 app.use('/api/acceso', require('./backend/routes/acceso'));
 app.use('/api/inventario', require('./backend/routes/inventario'));
+app.use('/api/clientes', require('./backend/routes/clientes'));
 
 /*
 ====================================================

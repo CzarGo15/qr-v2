@@ -571,7 +571,27 @@ async function generarPDF(datos = {}) {
         eventoFlyer: limpiarTexto(datos.eventoFlyer || datos.flyer, '')
     };
 
-    const qrValor = limpiarTexto(datos.qr, uuid);
+    /*
+    IMPORTANTE:
+    El campo datos.qr en versiones anteriores podía traer una imagen base64 completa.
+    Eso provoca el error:
+    "The amount of data is too big to be stored in a QR Code".
+
+    El QR debe contener un texto corto para validación.
+    Usamos UUID como valor principal.
+    */
+    let qrValor = uuid;
+
+    const qrRecibido = limpiarTexto(datos.qr, '');
+
+    if (
+        qrRecibido &&
+        !qrRecibido.startsWith('data:image') &&
+        qrRecibido.length <= 180
+    ) {
+        qrValor = qrRecibido;
+    }
+
     const qrBuffer = await crearQRBuffer(qrValor);
     const barcodeBuffer = await crearBarcodeBuffer(folio);
     const flyerBuffer = await downloadBuffer(data.eventoFlyer);

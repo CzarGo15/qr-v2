@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EXELARIS Admin | Clientes</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box}
+body{font-family:Poppins,sans-serif;background:#020617;color:#E5E7EB}
+.glass{background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.10);box-shadow:0 24px 80px rgba(0,0,0,.35);backdrop-filter:blur(18px)}
+.card{border-radius:26px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);padding:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:16px;padding:12px 16px;font-weight:900;text-decoration:none;cursor:pointer;border:none}
+.btn-primary{background:linear-gradient(135deg,#7C3AED,#2563EB);color:white}
+.btn-green{background:linear-gradient(135deg,#16A34A,#22C55E);color:white}
+.btn-soft{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:#E5E7EB}
+.input,.select{width:100%;background:#0F172A;border:1px solid rgba(255,255,255,.12);color:white;outline:none;border-radius:18px;padding:14px 16px;font-weight:700}
+.label{display:block;color:#CBD5E1;font-size:12px;font-weight:900;margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em}
+.table-wrap{overflow:auto;border-radius:22px;border:1px solid rgba(255,255,255,.10)}
+table{width:100%;border-collapse:collapse;min-width:980px}
+th{background:#0F172A;color:#94A3B8;font-size:12px;text-transform:uppercase;letter-spacing:.08em;text-align:left;padding:14px;white-space:nowrap}
+td{padding:14px;border-top:1px solid rgba(255,255,255,.08);vertical-align:top}
+.badge{display:inline-flex;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:900}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-blue{background:#DBEAFE;color:#1D4ED8}
+.badge-yellow{background:#FEF3C7;color:#92400E}
+</style>
+
+<script>
+window.EXELARIS_ALLOWED_ROLES = ['admin'];
+</script>
+<script src="admin-auth.js"></script>
+</head>
+
+<body>
+
+<main class="max-w-7xl mx-auto px-5 py-8">
+
+<header class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+    <div>
+        <div class="text-sm tracking-[.28em] text-purple-300 font-bold">
+            EXELARIS ADMIN
+        </div>
+
+        <h1 class="text-4xl lg:text-5xl font-black text-white mt-2">
+            Clientes y correos
+        </h1>
+
+        <p class="text-slate-400 mt-3">
+            Exporta compradores únicos para futuras campañas y análisis de clientes.
+        </p>
+    </div>
+
+    <div class="flex gap-3 flex-wrap">
+        <a class="btn btn-soft" href="inventario.html">Dashboard</a>
+        <a class="btn btn-soft" href="compras.html">Compras</a>
+        <button class="btn btn-primary" onclick="cargarClientes()">Actualizar</button>
+    </div>
+</header>
+
+<section class="grid md:grid-cols-4 gap-4 mb-6">
+    <div class="glass rounded-3xl p-5">
+        <div class="text-slate-400 text-sm font-black">Clientes únicos</div>
+        <div id="statClientes" class="text-3xl font-black mt-2">0</div>
+    </div>
+
+    <div class="glass rounded-3xl p-5">
+        <div class="text-slate-400 text-sm font-black">Compras analizadas</div>
+        <div id="statCompras" class="text-3xl font-black mt-2">0</div>
+    </div>
+
+    <div class="glass rounded-3xl p-5">
+        <div class="text-slate-400 text-sm font-black">Filtro</div>
+        <div id="statFiltro" class="text-xl font-black mt-2">Activo</div>
+    </div>
+
+    <div class="glass rounded-3xl p-5">
+        <div class="text-slate-400 text-sm font-black">Exportación</div>
+        <button class="btn btn-green mt-3 w-full" onclick="exportarCSV()">Exportar CSV</button>
+    </div>
+</section>
+
+<section class="glass rounded-3xl p-6 mb-6">
+    <div class="grid md:grid-cols-4 gap-4 items-end">
+        <div>
+            <label class="label">Alcance</label>
+            <select id="scope" class="select" onchange="cambiarScope()">
+                <option value="activo">Evento activo</option>
+                <option value="todos">Todos los eventos</option>
+                <option value="evento">Evento específico</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="label">Evento específico</label>
+            <select id="eventoId" class="select" disabled></select>
+        </div>
+
+        <div>
+            <label class="label">Buscar</label>
+            <input id="busqueda" class="input" placeholder="Nombre, correo, teléfono">
+        </div>
+
+        <div>
+            <button class="btn btn-primary w-full" onclick="cargarClientes()">Aplicar filtro</button>
+        </div>
+    </div>
+</section>
+
+<section class="glass rounded-3xl p-6">
+    <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+        <h2 class="text-2xl font-black text-white">Listado de clientes</h2>
+        <div class="text-slate-400 font-bold">
+            Correos duplicados se muestran una sola vez.
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Contacto</th>
+                    <th>Compras</th>
+                    <th>Último evento</th>
+                    <th>Canal</th>
+                    <th>Total gastado</th>
+                </tr>
+            </thead>
+
+            <tbody id="clientesBody">
+                <tr>
+                    <td colspan="6">Cargando clientes...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="glass rounded-3xl p-6 mt-6">
+    <h2 class="text-2xl font-black text-white mb-3">Nota para marketing</h2>
+
+    <p class="text-slate-400">
+        Esta exportación usa los correos capturados durante la compra. Para campañas futuras,
+        lo ideal es agregar después una casilla de autorización tipo:
+        “Deseo recibir información de futuros eventos de EXELARIS”.
+    </p>
+</section>
+
+</main>
+
+<script>
+const API='https://fiestaretro-api.onrender.com';
+
+let clientes=[];
+let eventos=[];
+
+function esc(t){
+    return String(t||'')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+}
+
+function dinero(v){
+    return Number(v||0).toLocaleString('es-MX',{
+        style:'currency',
+        currency:'MXN',
+        maximumFractionDigits:0
+    });
+}
+
+function fecha(valor){
+    if(!valor) return '-';
+
+    const d=new Date(valor);
+
+    if(Number.isNaN(d.getTime())){
+        return valor;
+    }
+
+    return d.toLocaleString('es-MX');
+}
+
+function authHeaders(){
+    const token = localStorage.getItem('exelaris_token')
+        || localStorage.getItem('exelaris_admin_token')
+        || localStorage.getItem('token')
+        || '';
+
+    return token ? { Authorization:`Bearer ${token}` } : {};
+}
+
+function badge(text,cls='badge-blue'){
+    return `<span class="badge ${cls}">${esc(text)}</span>`;
+}
+
+function params(){
+    const scope=document.getElementById('scope').value;
+    const eventoId=document.getElementById('eventoId').value;
+
+    const p=new URLSearchParams();
+    p.set('scope',scope);
+
+    if(scope==='evento' && eventoId){
+        p.set('eventoId',eventoId);
+    }
+
+    return p.toString();
+}
+
+async function cargarEventos(){
+    try{
+        const r=await fetch(`${API}/api/clientes/eventos`,{
+            headers:{
+                ...authHeaders()
+            }
+        });
+
+        const d=await r.json();
+
+        if(!d.success){
+            throw new Error(d.error);
+        }
+
+        eventos=d.eventos || [];
+
+        const select=document.getElementById('eventoId');
+
+        select.innerHTML=eventos.map(e=>`
+            <option value="${esc(e.id)}">
+                ${e.activo ? 'ACTIVO · ' : ''}${esc(e.nombre)} · ${esc(e.fecha || '')}
+            </option>
+        `).join('');
+
+    }catch(error){
+        console.error(error);
+    }
+}
+
+function cambiarScope(){
+    const scope=document.getElementById('scope').value;
+    const evento=document.getElementById('eventoId');
+
+    evento.disabled = scope !== 'evento';
+
+    document.getElementById('statFiltro').textContent =
+        scope === 'activo' ? 'Activo' :
+        scope === 'todos' ? 'Todos' :
+        'Evento';
+}
+
+async function cargarClientes(){
+    const body=document.getElementById('clientesBody');
+
+    body.innerHTML='<tr><td colspan="6">Cargando clientes...</td></tr>';
+
+    try{
+        const r=await fetch(`${API}/api/clientes/listar?${params()}`,{
+            headers:{
+                ...authHeaders()
+            }
+        });
+
+        const d=await r.json();
+
+        if(!d.success){
+            throw new Error(d.error);
+        }
+
+        clientes=d.clientes || [];
+
+        document.getElementById('statClientes').textContent=d.resumen?.clientesUnicos || clientes.length;
+        document.getElementById('statCompras').textContent=d.resumen?.comprasAnalizadas || 0;
+
+        renderClientes();
+
+    }catch(error){
+        body.innerHTML=`<tr><td colspan="6" class="text-red-300 font-black">${esc(error.message)}</td></tr>`;
+    }
+}
+
+function renderClientes(){
+    const body=document.getElementById('clientesBody');
+    const q=document.getElementById('busqueda').value.trim().toLowerCase();
+
+    const filtrados=clientes.filter(c=>{
+        const texto=[
+            c.nombre,
+            c.correo,
+            c.telefono,
+            c.ultimoEvento
+        ].join(' ').toLowerCase();
+
+        return !q || texto.includes(q);
+    });
+
+    if(filtrados.length===0){
+        body.innerHTML='<tr><td colspan="6">No hay clientes para mostrar.</td></tr>';
+        return;
+    }
+
+    body.innerHTML=filtrados.map(c=>`
+        <tr>
+            <td>
+                <strong class="text-white">${esc(c.nombre || 'Sin nombre')}</strong>
+                <div class="text-slate-400 text-sm">${esc(c.correo)}</div>
+            </td>
+
+            <td>
+                <div>${esc(c.telefono || '-')}</div>
+                <div class="text-slate-400 text-sm">${esc(c.correo)}</div>
+            </td>
+
+            <td>
+                ${badge(`${c.totalCompras || 0} compras`,'badge-blue')}
+                <div class="text-slate-400 text-sm mt-1">${c.totalBoletos || 0} boletos</div>
+            </td>
+
+            <td>
+                <strong>${esc(c.ultimoEvento || '-')}</strong>
+                <div class="text-slate-400 text-sm">${fecha(c.ultimaCompra)}</div>
+            </td>
+
+            <td>
+                ${badge(c.canalVenta || 'sin canal','badge-yellow')}
+            </td>
+
+            <td>
+                <strong>${dinero(c.totalGastado)}</strong>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function exportarCSV(){
+    window.open(`${API}/api/clientes/exportar?${params()}`,'_blank');
+}
+
+document.getElementById('busqueda').addEventListener('input',renderClientes);
+
+(async function iniciar(){
+    await cargarEventos();
+    cambiarScope();
+    await cargarClientes();
+})();
+</script>
+
+<script src="admin-nav.js"></script>
+</body>
+</html>

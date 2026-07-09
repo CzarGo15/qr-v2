@@ -7,53 +7,306 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box}body{font-family:Poppins,sans-serif;background:#020617;color:#E5E7EB}.glass{background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.10);box-shadow:0 24px 80px rgba(0,0,0,.35);backdrop-filter:blur(18px)}.card{border-radius:26px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);padding:20px}.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:16px;padding:12px 16px;font-weight:900;text-decoration:none}.btn-primary{background:linear-gradient(135deg,#7C3AED,#2563EB);color:white}.btn-soft{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:#E5E7EB}.table-wrap{overflow:auto;border-radius:22px;border:1px solid rgba(255,255,255,.10)}table{width:100%;border-collapse:collapse;min-width:850px}th{background:#0F172A;color:#94A3B8;font-size:12px;text-transform:uppercase;letter-spacing:.08em;text-align:left;padding:14px;white-space:nowrap}td{padding:14px;border-top:1px solid rgba(255,255,255,.08);vertical-align:top}.progress{height:12px;background:#1E293B;border-radius:999px;overflow:hidden}.progress>div{height:100%;background:linear-gradient(90deg,#7C3AED,#22C55E);border-radius:999px}.badge{display:inline-flex;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:900}.badge-green{background:#DCFCE7;color:#166534}.badge-blue{background:#DBEAFE;color:#1D4ED8}.badge-yellow{background:#FEF3C7;color:#92400E}.badge-red{background:#FEE2E2;color:#991B1B}
+*{box-sizing:border-box}
+body{font-family:Poppins,sans-serif;background:#020617;color:#E5E7EB}
+.glass{background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.10);box-shadow:0 24px 80px rgba(0,0,0,.35);backdrop-filter:blur(18px)}
+.card{border-radius:26px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);padding:20px}
+.admin-card{display:block;border-radius:26px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);padding:20px;text-decoration:none;color:inherit;transition:.18s}
+.admin-card:hover{transform:translateY(-2px);background:rgba(124,58,237,.14);border-color:rgba(168,85,247,.35)}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:16px;padding:12px 16px;font-weight:900;text-decoration:none}
+.btn-primary{background:linear-gradient(135deg,#7C3AED,#2563EB);color:white}
+.btn-soft{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:#E5E7EB}
+.table-wrap{overflow:auto;border-radius:22px;border:1px solid rgba(255,255,255,.10)}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th{background:#0F172A;color:#94A3B8;font-size:12px;text-transform:uppercase;letter-spacing:.08em;text-align:left;padding:14px;white-space:nowrap}
+td{padding:14px;border-top:1px solid rgba(255,255,255,.08);vertical-align:top}
+.progress{height:12px;background:#1E293B;border-radius:999px;overflow:hidden}
+.progress>div{height:100%;background:linear-gradient(90deg,#7C3AED,#22C55E);border-radius:999px}
+.badge{display:inline-flex;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:900}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-blue{background:#DBEAFE;color:#1D4ED8}
+.badge-yellow{background:#FEF3C7;color:#92400E}
+.badge-red{background:#FEE2E2;color:#991B1B}
 </style>
-  
-<script>
-  window.EXELARIS_ALLOWED_ROLES=['admin'];
-  </script>
 
-  <script src="admin-auth.js"></script>
+<script>
+window.EXELARIS_ALLOWED_ROLES=['admin'];
+</script>
+<script src="admin-auth.js"></script>
 </head>
+
 <body>
 <main class="max-w-7xl mx-auto px-5 py-8">
+
 <header class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-<div><div class="text-sm tracking-[.28em] text-purple-300 font-bold">EXELARIS ADMIN</div><h1 class="text-4xl lg:text-5xl font-black text-white mt-2">Dashboard de inventario</h1><p id="eventoInfo" class="text-slate-400 mt-3">Cargando evento...</p></div>
-<div class="flex gap-3 flex-wrap"><a class="btn btn-soft" href="compras.html">Compras</a><a class="btn btn-soft" href="taquilla.html">Taquilla</a><a class="btn btn-soft" href="lotes.html">Lotes</a><a class="btn btn-soft" href="acceso.html">Acceso</a><button class="btn btn-primary" onclick="cargar()">Actualizar</button></div>
+    <div>
+        <div class="text-sm tracking-[.28em] text-purple-300 font-bold">EXELARIS ADMIN</div>
+        <h1 class="text-4xl lg:text-5xl font-black text-white mt-2">Dashboard de inventario</h1>
+        <p id="eventoInfo" class="text-slate-400 mt-3">Cargando evento...</p>
+    </div>
+
+    <div class="flex gap-3 flex-wrap">
+        <button class="btn btn-primary" onclick="cargar()">Actualizar</button>
+    </div>
 </header>
+
+<!-- PANEL DE PESTAÑAS SOLO ADMIN -->
+<section class="glass rounded-3xl p-6 mb-6">
+    <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
+        <div>
+            <h2 class="text-2xl font-black text-white">Panel de administración</h2>
+            <p class="text-slate-400 mt-1">Accesos rápidos del Administrador.</p>
+        </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <a class="admin-card" href="eventos.html">
+            <div class="text-purple-300 font-black text-lg">Eventos</div>
+            <div class="text-slate-400 mt-2">Crear, editar y activar eventos.</div>
+        </a>
+
+        <a class="admin-card" href="compras.html">
+            <div class="text-purple-300 font-black text-lg">Compras</div>
+            <div class="text-slate-400 mt-2">Consultar compras, folios y reenvíos.</div>
+        </a>
+
+        <a class="admin-card" href="taquilla.html">
+            <div class="text-purple-300 font-black text-lg">Taquilla</div>
+            <div class="text-slate-400 mt-2">Venta presencial.</div>
+        </a>
+
+        <a class="admin-card" href="lotes.html">
+            <div class="text-purple-300 font-black text-lg">Lotes físicos</div>
+            <div class="text-slate-400 mt-2">Generar boletos para puntos externos.</div>
+        </a>
+
+        <a class="admin-card" href="lotes-impresion.html">
+            <div class="text-purple-300 font-black text-lg">Impresión lotes</div>
+            <div class="text-slate-400 mt-2">PDF maestro 4 boletos por hoja.</div>
+        </a>
+
+        <a class="admin-card" href="clientes.html">
+            <div class="text-purple-300 font-black text-lg">Clientes / correos</div>
+            <div class="text-slate-400 mt-2">Exportar clientes para marketing.</div>
+        </a>
+
+        <a class="admin-card" href="usuarios.html">
+            <div class="text-purple-300 font-black text-lg">Usuarios</div>
+            <div class="text-slate-400 mt-2">Administrar accesos y roles.</div>
+        </a>
+
+        <a class="admin-card" href="acceso.html">
+            <div class="text-purple-300 font-black text-lg">Acceso QR</div>
+            <div class="text-slate-400 mt-2">Vista scanner para prueba admin.</div>
+        </a>
+    </div>
+</section>
+
 <section class="grid md:grid-cols-5 gap-4 mb-6">
-<div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Ventas</div><div id="statVentas" class="text-3xl font-black mt-2">$0</div></div>
-<div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Compras</div><div id="statCompras" class="text-3xl font-black mt-2">0</div></div>
-<div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Boletos</div><div id="statBoletos" class="text-3xl font-black mt-2">0</div></div>
-<div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Usados</div><div id="statUsados" class="text-3xl font-black mt-2">0</div></div>
-<div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Lotes</div><div id="statLotes" class="text-3xl font-black mt-2">0</div></div>
+    <div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Ventas</div><div id="statVentas" class="text-3xl font-black mt-2">$0</div></div>
+    <div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Compras</div><div id="statCompras" class="text-3xl font-black mt-2">0</div></div>
+    <div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Boletos</div><div id="statBoletos" class="text-3xl font-black mt-2">0</div></div>
+    <div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Usados</div><div id="statUsados" class="text-3xl font-black mt-2">0</div></div>
+    <div class="glass rounded-3xl p-5"><div class="text-slate-400 text-sm font-black">Lotes</div><div id="statLotes" class="text-3xl font-black mt-2">0</div></div>
 </section>
-<section class="glass rounded-3xl p-6 mb-6"><h2 class="text-2xl font-black text-white mb-5">Inventario por categoría</h2><div id="categorias" class="grid lg:grid-cols-3 gap-4"></div></section>
+
+<section class="glass rounded-3xl p-6 mb-6">
+    <h2 class="text-2xl font-black text-white mb-5">Inventario por categoría</h2>
+    <div id="categorias" class="grid lg:grid-cols-3 gap-4"></div>
+</section>
+
 <section class="grid lg:grid-cols-2 gap-6 mb-6">
-<div class="glass rounded-3xl p-6"><h2 class="text-2xl font-black text-white mb-5">Ventas por canal</h2><div class="table-wrap"><table><thead><tr><th>Canal</th><th>Compras</th><th>Boletos</th><th>Total</th></tr></thead><tbody id="canales"></tbody></table></div></div>
-<div class="glass rounded-3xl p-6"><h2 class="text-2xl font-black text-white mb-5">Estados de boletos</h2><div id="estados" class="grid grid-cols-2 gap-4"></div></div>
+    <div class="glass rounded-3xl p-6">
+        <h2 class="text-2xl font-black text-white mb-5">Ventas por canal</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Canal</th><th>Compras</th><th>Boletos</th><th>Total</th></tr>
+                </thead>
+                <tbody id="canales"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="glass rounded-3xl p-6">
+        <h2 class="text-2xl font-black text-white mb-5">Estados de boletos</h2>
+        <div id="estados" class="grid grid-cols-2 gap-4"></div>
+    </div>
 </section>
-<section class="glass rounded-3xl p-6 mb-6"><h2 class="text-2xl font-black text-white mb-5">Puntos de venta externos</h2><div class="table-wrap"><table><thead><tr><th>Punto</th><th>Responsables</th><th>Lotes</th><th>Boletos</th><th>Activos</th><th>Usados</th><th>Estimado</th></tr></thead><tbody id="puntos"></tbody></table></div></section>
+
+<section class="glass rounded-3xl p-6 mb-6">
+    <h2 class="text-2xl font-black text-white mb-5">Puntos de venta externos</h2>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Punto</th><th>Responsables</th><th>Lotes</th><th>Boletos</th><th>Activos</th><th>Usados</th><th>Estimado</th></tr>
+            </thead>
+            <tbody id="puntos"></tbody>
+        </table>
+    </div>
+</section>
+
 <section class="grid lg:grid-cols-2 gap-6">
-<div class="glass rounded-3xl p-6"><h2 class="text-2xl font-black text-white mb-5">Compras recientes</h2><div class="table-wrap"><table><thead><tr><th>Compra</th><th>Cliente</th><th>Canal</th><th>Total</th></tr></thead><tbody id="compras"></tbody></table></div></div>
-<div class="glass rounded-3xl p-6"><h2 class="text-2xl font-black text-white mb-5">Lotes recientes</h2><div class="table-wrap"><table><thead><tr><th>Lote</th><th>Punto</th><th>Categoría</th><th>Boletos</th></tr></thead><tbody id="lotes"></tbody></table></div></div>
+    <div class="glass rounded-3xl p-6">
+        <h2 class="text-2xl font-black text-white mb-5">Compras recientes</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Compra</th><th>Cliente</th><th>Canal</th><th>Total</th></tr>
+                </thead>
+                <tbody id="compras"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="glass rounded-3xl p-6">
+        <h2 class="text-2xl font-black text-white mb-5">Lotes recientes</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Lote</th><th>Punto</th><th>Categoría</th><th>Boletos</th></tr>
+                </thead>
+                <tbody id="lotes"></tbody>
+            </table>
+        </div>
+    </div>
 </section>
+
 </main>
+
 <script>
 const API='https://fiestaretro-api.onrender.com';
-function dinero(v){return Number(v||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0})}
-function esc(t){return String(t||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;")}
-function pct(v,t){if(!t||t<=0)return 0;return Math.min(100,Math.round((Number(v||0)/Number(t))*100))}
-function badge(text,cls='badge-blue'){return `<span class="badge ${cls}">${esc(text)}</span>`}
-async function cargar(){try{const r=await fetch(`${API}/api/inventario/resumen`);const d=await r.json();if(!d.success)throw new Error(d.error);document.getElementById('eventoInfo').textContent=`${d.evento.nombre} · ${d.evento.fecha||''} · ${d.evento.lugar||''}`;document.getElementById('statVentas').textContent=dinero(d.resumen.totalVendido);document.getElementById('statCompras').textContent=d.resumen.totalCompras;document.getElementById('statBoletos').textContent=d.resumen.boletosRegistrados;document.getElementById('statUsados').textContent=d.resumen.estados.usado||0;document.getElementById('statLotes').textContent=d.resumen.lotes;renderCategorias(d.categorias||[]);renderCanales(d.porCanal||[]);renderEstados(d.resumen.estados||{});renderPuntos(d.puntosVenta||[]);renderCompras(d.comprasRecientes||[]);renderLotes(d.lotesRecientes||[])}catch(e){alert(e.message)}}
-function renderCategorias(categorias){document.getElementById('categorias').innerHTML=categorias.map(c=>{const grupo=c.tipoVenta==='grupo'||Number(c.boletosPorUnidad)>1;const vendido=c.vendidos||0;const cupo=c.cupoTotal;const porcentaje=pct(vendido,cupo);const unidadInfo=grupo?`<div class="text-slate-300 font-bold mt-2">${c.unidadesVendidas}/${c.unidadesTotal} ${esc(c.unidad)} vendidas</div>`:'';const disp=grupo?`${c.disponiblesUnidades} ${c.unidad}`:`${c.disponiblesBoletos} boletos`;return `<div class="card"><div class="flex items-start justify-between gap-3"><div><h3 class="text-2xl font-black text-white">${esc(c.nombre)}</h3><p class="text-slate-400 text-sm mt-1">${esc(c.descripcion||'')}</p></div>${badge(grupo?'Grupo':'Individual',grupo?'badge-yellow':'badge-blue')}</div><div class="text-purple-300 text-2xl font-black mt-4">${dinero(c.precio)}</div><div class="text-slate-300 font-bold mt-2">${vendido}/${cupo===null?'∞':cupo} boletos vendidos</div>${unidadInfo}<div class="text-green-300 font-black mt-2">Disponible: ${esc(disp)}</div><div class="progress mt-4"><div style="width:${porcentaje}%"></div></div><div class="text-slate-400 text-sm font-bold mt-2">${porcentaje}% vendido</div></div>`}).join('')}
-function renderCanales(canales){document.getElementById('canales').innerHTML=(canales.length?canales:[{nombre:'Sin ventas',compras:0,boletos:0,total:0}]).map(c=>`<tr><td>${esc(c.nombre)}</td><td>${c.compras}</td><td>${c.boletos}</td><td><strong>${dinero(c.total)}</strong></td></tr>`).join('')}
-function renderEstados(estados){const keys=Object.keys(estados);document.getElementById('estados').innerHTML=(keys.length?keys:['activo','usado']).map(k=>{const cls=k==='usado'?'badge-red':(k==='activo'?'badge-green':'badge-yellow');return `<div class="card"><div>${badge(k,cls)}</div><div class="text-4xl font-black text-white mt-3">${estados[k]||0}</div></div>`}).join('')}
-function renderPuntos(puntos){document.getElementById('puntos').innerHTML=(puntos.length?puntos:[]).map(p=>`<tr><td><strong>${esc(p.puntoVenta)}</strong></td><td>${esc((p.responsables||[]).join(', '))}</td><td>${p.lotes}</td><td>${p.boletos}</td><td>${p.activos}</td><td>${p.usados}</td><td><strong>${dinero(p.totalEstimado)}</strong></td></tr>`).join('')||'<tr><td colspan="7">Sin puntos de venta externos.</td></tr>'}
-function renderCompras(compras){document.getElementById('compras').innerHTML=(compras.length?compras:[]).map(c=>`<tr><td><strong>${esc(c.compraId)}</strong></td><td>${esc(c.compradorNombre||'')}</td><td>${esc(c.canalVenta||'')}</td><td><strong>${dinero(c.total)}</strong></td></tr>`).join('')||'<tr><td colspan="4">Sin compras.</td></tr>'}
-function renderLotes(lotes){document.getElementById('lotes').innerHTML=(lotes.length?lotes:[]).map(l=>`<tr><td><strong>${esc(l.loteId)}</strong></td><td>${esc(l.puntoVenta||'')}</td><td>${esc(l.categoriaNombre||'')}</td><td>${l.totalBoletos||0}</td></tr>`).join('')||'<tr><td colspan="4">Sin lotes.</td></tr>'}
+
+function dinero(v){
+    return Number(v||0).toLocaleString('es-MX',{
+        style:'currency',
+        currency:'MXN',
+        maximumFractionDigits:0
+    });
+}
+
+function esc(t){
+    return String(t||'')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+}
+
+function pct(v,t){
+    if(!t||t<=0)return 0;
+    return Math.min(100,Math.round((Number(v||0)/Number(t))*100));
+}
+
+function badge(text,cls='badge-blue'){
+    return `<span class="badge ${cls}">${esc(text)}</span>`;
+}
+
+async function cargar(){
+    try{
+        const r=await fetch(`${API}/api/inventario/resumen`);
+        const d=await r.json();
+
+        if(!d.success)throw new Error(d.error);
+
+        document.getElementById('eventoInfo').textContent=`${d.evento.nombre} · ${d.evento.fecha||''} · ${d.evento.lugar||''}`;
+        document.getElementById('statVentas').textContent=dinero(d.resumen.totalVendido);
+        document.getElementById('statCompras').textContent=d.resumen.totalCompras;
+        document.getElementById('statBoletos').textContent=d.resumen.boletosRegistrados;
+        document.getElementById('statUsados').textContent=d.resumen.estados.usado||0;
+        document.getElementById('statLotes').textContent=d.resumen.lotes;
+
+        renderCategorias(d.categorias||[]);
+        renderCanales(d.porCanal||[]);
+        renderEstados(d.resumen.estados||{});
+        renderPuntos(d.puntosVenta||[]);
+        renderCompras(d.comprasRecientes||[]);
+        renderLotes(d.lotesRecientes||[]);
+    }catch(e){
+        alert(e.message);
+    }
+}
+
+function renderCategorias(categorias){
+    document.getElementById('categorias').innerHTML=categorias.map(c=>{
+        const grupo=c.tipoVenta==='grupo'||Number(c.boletosPorUnidad)>1;
+        const vendido=c.vendidos||0;
+        const cupo=c.cupoTotal;
+        const porcentaje=pct(vendido,cupo);
+        const unidadInfo=grupo?`<div class="text-slate-300 font-bold mt-2">${c.unidadesVendidas}/${c.unidadesTotal} ${esc(c.unidad)} vendidas</div>`:'';
+        const disp=grupo?`${c.disponiblesUnidades} ${c.unidad}`:`${c.disponiblesBoletos} boletos`;
+
+        return `
+        <div class="card">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h3 class="text-2xl font-black text-white">${esc(c.nombre)}</h3>
+                    <p class="text-slate-400 text-sm mt-1">${esc(c.descripcion||'')}</p>
+                </div>
+                ${badge(grupo?'Grupo':'Individual',grupo?'badge-yellow':'badge-blue')}
+            </div>
+
+            <div class="text-purple-300 text-2xl font-black mt-4">${dinero(c.precio)}</div>
+            <div class="text-slate-300 font-bold mt-2">${vendido}/${cupo===null?'∞':cupo} boletos vendidos</div>
+            ${unidadInfo}
+            <div class="text-green-300 font-black mt-2">Disponible: ${esc(disp)}</div>
+            <div class="progress mt-4"><div style="width:${porcentaje}%"></div></div>
+            <div class="text-slate-400 text-sm font-bold mt-2">${porcentaje}% vendido</div>
+        </div>`;
+    }).join('');
+}
+
+function renderCanales(canales){
+    document.getElementById('canales').innerHTML=(canales.length?canales:[{nombre:'Sin ventas',compras:0,boletos:0,total:0}])
+        .map(c=>`<tr><td>${esc(c.nombre)}</td><td>${c.compras}</td><td>${c.boletos}</td><td><strong>${dinero(c.total)}</strong></td></tr>`)
+        .join('');
+}
+
+function renderEstados(estados){
+    const keys=Object.keys(estados);
+    document.getElementById('estados').innerHTML=(keys.length?keys:['activo','usado']).map(k=>{
+        const cls=k==='usado'?'badge-red':(k==='activo'?'badge-green':'badge-yellow');
+        return `<div class="card"><div>${badge(k,cls)}</div><div class="text-4xl font-black text-white mt-3">${estados[k]||0}</div></div>`;
+    }).join('');
+}
+
+function renderPuntos(puntos){
+    document.getElementById('puntos').innerHTML=(puntos.length?puntos:[]).map(p=>`
+        <tr>
+            <td><strong>${esc(p.puntoVenta)}</strong></td>
+            <td>${esc((p.responsables||[]).join(', '))}</td>
+            <td>${p.lotes}</td>
+            <td>${p.boletos}</td>
+            <td>${p.activos}</td>
+            <td>${p.usados}</td>
+            <td><strong>${dinero(p.totalEstimado)}</strong></td>
+        </tr>`).join('')||'<tr><td colspan="7">Sin puntos de venta externos.</td></tr>';
+}
+
+function renderCompras(compras){
+    document.getElementById('compras').innerHTML=(compras.length?compras:[]).map(c=>`
+        <tr>
+            <td><strong>${esc(c.compraId)}</strong></td>
+            <td>${esc(c.compradorNombre||'')}</td>
+            <td>${esc(c.canalVenta||'')}</td>
+            <td><strong>${dinero(c.total)}</strong></td>
+        </tr>`).join('')||'<tr><td colspan="4">Sin compras.</td></tr>';
+}
+
+function renderLotes(lotes){
+    document.getElementById('lotes').innerHTML=(lotes.length?lotes:[]).map(l=>`
+        <tr>
+            <td><strong>${esc(l.loteId)}</strong></td>
+            <td>${esc(l.puntoVenta||'')}</td>
+            <td>${esc(l.categoriaNombre||'')}</td>
+            <td>${l.totalBoletos||0}</td>
+        </tr>`).join('')||'<tr><td colspan="4">Sin lotes.</td></tr>';
+}
+
 cargar();
 </script>
+
+<script src="admin-nav.js"></script>
 </body>
 </html>

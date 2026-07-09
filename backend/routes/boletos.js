@@ -69,7 +69,13 @@ router.post('/comprar', async (req,res) => {
         const comprador = {
             nombre:body.comprador?.nombre || body.nombre || '',
             correo:body.comprador?.correo || body.correo || '',
-            telefono:body.comprador?.telefono || body.telefono || ''
+            telefono:body.comprador?.telefono || body.telefono || '',
+            marketingConsent:Boolean(
+                body.comprador?.marketingConsent ||
+                body.marketingConsent ||
+                body.aceptaMarketing ||
+                false
+            )
         };
 
         if(!comprador.nombre){
@@ -106,6 +112,9 @@ router.post('/comprar', async (req,res) => {
             compradorNombre:comprador.nombre,
             compradorCorreo:comprador.correo,
             compradorTelefono:comprador.telefono || '',
+            marketingConsent:comprador.marketingConsent,
+            aceptaMarketing:comprador.marketingConsent,
+            fechaConsentimientoMarketing:comprador.marketingConsent ? new Date() : null,
             cantidad:totalBoletos,
             subtotal:totalImporte,
             total:totalImporte,
@@ -147,6 +156,14 @@ router.post('/comprar', async (req,res) => {
             folios:boletosGenerados.map(b => b.folio)
         });
 
+        await Promise.all(
+            boletosGenerados.map(boleto =>
+                db.collection('boletos').doc(boleto.uuid).update({
+                    compradorMarketingConsent:comprador.marketingConsent
+                })
+            )
+        );
+
         let resultadoCorreo = { enviado:false, metodo:null, error:null };
 
         try{
@@ -187,6 +204,7 @@ router.post('/comprar', async (req,res) => {
             compraId,
             cantidad:totalBoletos,
             total:totalImporte,
+            marketingConsent:comprador.marketingConsent,
             correo:resultadoCorreo,
             boletos:boletosGenerados.map(boleto => ({
                 uuid:boleto.uuid,

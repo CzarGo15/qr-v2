@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EXELARIS Admin | Impresión de lotes</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box}
+body{font-family:Poppins,sans-serif;background:#020617;color:#E5E7EB}
+.glass{background:rgba(15,23,42,.88);border:1px solid rgba(255,255,255,.10);box-shadow:0 24px 80px rgba(0,0,0,.35);backdrop-filter:blur(18px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:16px;padding:12px 16px;font-weight:900;text-decoration:none;cursor:pointer;border:none}
+.btn-primary{background:linear-gradient(135deg,#7C3AED,#2563EB);color:white}
+.btn-green{background:linear-gradient(135deg,#16A34A,#22C55E);color:white}
+.btn-soft{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);color:#E5E7EB}
+.input{width:100%;background:#0F172A;border:1px solid rgba(255,255,255,.12);color:white;outline:none;border-radius:18px;padding:14px 16px;font-weight:700}
+.table-wrap{overflow:auto;border-radius:22px;border:1px solid rgba(255,255,255,.10)}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th{background:#0F172A;color:#94A3B8;font-size:12px;text-transform:uppercase;letter-spacing:.08em;text-align:left;padding:14px;white-space:nowrap}
+td{padding:14px;border-top:1px solid rgba(255,255,255,.08);vertical-align:top}
+.badge{display:inline-flex;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:900}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-blue{background:#DBEAFE;color:#1D4ED8}
+.badge-yellow{background:#FEF3C7;color:#92400E}
+.card{border-radius:26px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);padding:20px}
+</style>
+
+<script>
+window.EXELARIS_ALLOWED_ROLES = ['admin'];
+</script>
+<script src="admin-auth.js"></script>
+</head>
+
+<body>
+
+<main class="max-w-7xl mx-auto px-5 py-8">
+
+<header class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+    <div>
+        <div class="text-sm tracking-[.28em] text-purple-300 font-bold">
+            EXELARIS ADMIN
+        </div>
+
+        <h1 class="text-4xl lg:text-5xl font-black text-white mt-2">
+            Impresión de lotes
+        </h1>
+
+        <p class="text-slate-400 mt-3">
+            Genera un PDF maestro con 4 boletos por hoja carta para ahorrar papel.
+        </p>
+    </div>
+
+    <div class="flex gap-3 flex-wrap">
+        <a class="btn btn-soft" href="lotes.html">Lotes físicos</a>
+        <a class="btn btn-soft" href="inventario.html">Dashboard</a>
+        <button class="btn btn-primary" onclick="cargarLotes()">Actualizar</button>
+    </div>
+</header>
+
+<section class="grid lg:grid-cols-[1fr_360px] gap-6 mb-6">
+    <div class="glass rounded-3xl p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+            <h2 class="text-2xl font-black text-white">
+                Lotes disponibles
+            </h2>
+
+            <input id="busqueda" class="input md:max-w-sm" placeholder="Buscar lote, punto de venta o responsable">
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Lote</th>
+                        <th>Punto de venta</th>
+                        <th>Categoría</th>
+                        <th>Boletos</th>
+                        <th>Estado</th>
+                        <th>PDF impresión</th>
+                    </tr>
+                </thead>
+
+                <tbody id="lotesBody">
+                    <tr>
+                        <td colspan="6">Cargando lotes...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <aside class="glass rounded-3xl p-6 h-fit">
+        <h2 class="text-2xl font-black text-white mb-4">
+            Recomendación
+        </h2>
+
+        <div class="card">
+            <div class="text-xl font-black text-green-300">
+                4 boletos por hoja
+            </div>
+
+            <p class="text-slate-400 mt-3">
+                Es el mejor balance entre ahorro de papel y tamaño de QR.
+                No recomiendo 8 por hoja para acceso, porque el QR puede quedar pequeño.
+            </p>
+        </div>
+
+        <div class="card mt-4">
+            <div class="text-xl font-black text-purple-300">
+                PDFs individuales
+            </div>
+
+            <p class="text-slate-400 mt-3">
+                Se conservan los PDFs individuales generados por boleto.
+                Este módulo solo agrega un PDF maestro para imprimir.
+            </p>
+        </div>
+    </aside>
+</section>
+
+</main>
+
+<script>
+const API='https://fiestaretro-api.onrender.com';
+
+let lotes=[];
+
+function esc(t){
+    return String(t||'')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+}
+
+function authHeaders(){
+    const token = localStorage.getItem('exelaris_token')
+        || localStorage.getItem('exelaris_admin_token')
+        || localStorage.getItem('token')
+        || '';
+
+    return token ? { Authorization:`Bearer ${token}` } : {};
+}
+
+function badge(text,cls='badge-blue'){
+    return `<span class="badge ${cls}">${esc(text)}</span>`;
+}
+
+async function cargarLotes(){
+    const body=document.getElementById('lotesBody');
+
+    body.innerHTML='<tr><td colspan="6">Cargando lotes...</td></tr>';
+
+    try{
+        const r=await fetch(`${API}/api/lotes`,{
+            headers:{
+                ...authHeaders()
+            }
+        });
+
+        const d=await r.json();
+
+        if(!d.success){
+            throw new Error(d.error || 'No se pudieron cargar los lotes');
+        }
+
+        lotes=d.lotes || d.data || d.items || [];
+        renderLotes();
+
+    }catch(error){
+        body.innerHTML=`<tr><td colspan="6" class="text-red-300 font-black">${esc(error.message)}</td></tr>`;
+    }
+}
+
+function renderLotes(){
+    const body=document.getElementById('lotesBody');
+    const q=document.getElementById('busqueda').value.trim().toLowerCase();
+
+    const filtrados=lotes.filter(lote=>{
+        const texto=[
+            lote.loteId,
+            lote.id,
+            lote.puntoVenta,
+            lote.responsable,
+            lote.categoriaNombre,
+            lote.categoriaId
+        ].join(' ').toLowerCase();
+
+        return !q || texto.includes(q);
+    });
+
+    if(filtrados.length===0){
+        body.innerHTML='<tr><td colspan="6">No hay lotes para mostrar.</td></tr>';
+        return;
+    }
+
+    body.innerHTML=filtrados.map(lote=>{
+        const loteId=lote.loteId || lote.id;
+        const total=Number(lote.totalBoletos || lote.boletos || lote.cantidadBoletos || 0);
+        const usados=Number(lote.usados || 0);
+        const activos=Number(lote.activos || 0);
+
+        return `
+        <tr>
+            <td>
+                <strong class="text-white">${esc(loteId)}</strong>
+                <div class="text-slate-400 text-sm">${esc(lote.fechaCreacion || '')}</div>
+            </td>
+
+            <td>
+                <strong>${esc(lote.puntoVenta || 'Sin punto')}</strong>
+                <div class="text-slate-400 text-sm">${esc(lote.responsable || '')}</div>
+            </td>
+
+            <td>
+                ${badge(lote.categoriaNombre || lote.categoriaId || 'Categoría','badge-yellow')}
+            </td>
+
+            <td>
+                <strong>${total}</strong>
+                <div class="text-slate-400 text-sm">Activos: ${activos} · Usados: ${usados}</div>
+            </td>
+
+            <td>
+                ${badge(lote.estado || 'activo','badge-green')}
+            </td>
+
+            <td>
+                <a class="btn btn-green" target="_blank" href="${API}/api/lotes-impresion/${encodeURIComponent(loteId)}/pdf">
+                    Abrir PDF 4 por hoja
+                </a>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+document.getElementById('busqueda').addEventListener('input',renderLotes);
+
+cargarLotes();
+</script>
+
+<script src="admin-nav.js"></script>
+</body>
+</html>

@@ -301,22 +301,45 @@ function crearOpenpayClient(){
     const privateKey = valorEnv('OPENPAY_PRIVATE_KEY');
 
     /*
-    openpay-node:
-    false = sandbox
-    true  = producción
+    IMPORTANTE:
+    Algunas versiones de openpay-node usan:
+      new Openpay(merchantId, privateKey, isProduction)
+
+    Si se manda 'mx' como tercer parámetro en esas versiones,
+    lo interpreta como true/producción y termina pegando a producción,
+    provocando 401 con credenciales sandbox.
+
+    Por eso aquí usamos 3 parámetros y forzamos modo sandbox/producción
+    con setProductionReady cuando existe.
     */
     const productionReady = !openpaySandbox();
 
     const client = new Openpay(
         merchantId,
         privateKey,
-        'mx',
         productionReady
     );
+
+    if(typeof client.setProductionReady === 'function'){
+        client.setProductionReady(productionReady);
+    }
+
+    if(typeof client.setMerchantId === 'function'){
+        client.setMerchantId(merchantId);
+    }
+
+    if(typeof client.setPrivateKey === 'function'){
+        client.setPrivateKey(privateKey);
+    }
 
     if(typeof client.setTimeout === 'function'){
         client.setTimeout(30000);
     }
+
+    console.log('🔐 Openpay SDK client mode:', {
+        sandbox:openpaySandbox(),
+        productionReady
+    });
 
     return client;
 }

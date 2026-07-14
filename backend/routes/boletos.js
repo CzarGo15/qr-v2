@@ -28,15 +28,19 @@ const router = express.Router();
 const FieldValue = admin.firestore.FieldValue;
 
 function openpaySandbox(){
-    return String(process.env.OPENPAY_SANDBOX ?? 'true').toLowerCase() !== 'false';
+    return String(process.env.OPENPAY_SANDBOX ?? 'true').trim().toLowerCase() !== 'false';
+}
+
+function valorEnv(nombre){
+    return String(process.env[nombre] || '').trim();
 }
 
 function openpayConfigurado(){
     return Boolean(
-        process.env.OPENPAY_MERCHANT_ID &&
-        process.env.OPENPAY_PUBLIC_KEY &&
-        process.env.OPENPAY_PRIVATE_KEY &&
-        String(process.env.OPENPAY_ENABLED ?? 'true').toLowerCase() !== 'false'
+        valorEnv('OPENPAY_MERCHANT_ID') &&
+        valorEnv('OPENPAY_PUBLIC_KEY') &&
+        valorEnv('OPENPAY_PRIVATE_KEY') &&
+        String(process.env.OPENPAY_ENABLED ?? 'true').trim().toLowerCase() !== 'false'
     );
 }
 
@@ -44,8 +48,8 @@ function openpayPublicConfig(){
     return {
         enabled:openpayConfigurado(),
         sandbox:openpaySandbox(),
-        merchantId:process.env.OPENPAY_MERCHANT_ID || '',
-        publicKey:process.env.OPENPAY_PUBLIC_KEY || ''
+        merchantId:valorEnv('OPENPAY_MERCHANT_ID'),
+        publicKey:valorEnv('OPENPAY_PUBLIC_KEY')
     };
 }
 
@@ -63,8 +67,33 @@ function limpiarTexto(valor){
     return String(valor || '').trim();
 }
 
+function limpiarEmail(valor){
+    return limpiarTexto(valor).toLowerCase();
+}
+
+function limpiarTelefono(valor){
+    const digitos = limpiarTexto(valor).replace(/\D/g,'');
+
+    /*
+    Openpay acepta phone_number dentro de customer, pero es mejor
+    mandarlo solo cuando tenga formato razonable para evitar errores
+    raros del gateway.
+    */
+    if(digitos.length >= 10){
+        return digitos.slice(-10);
+    }
+
+    return '';
+}
+
 function normalizarMonto(valor){
-    return Number(Number(valor || 0).toFixed(2));
+    const monto = Number(Number(valor || 0).toFixed(2));
+
+    if(!Number.isFinite(monto) || monto <= 0){
+        throw new Error('El monto de pago no es válido para Openpay.');
+    }
+
+    return monto;
 }
 
 function dividirNombre(nombreCompleto){
@@ -72,15 +101,35 @@ function dividirNombre(nombreCompleto){
 
     if(partes.length <= 1){
         return {
-            name:partes[0] || 'Cliente',
+            name:(partes[0] || 'Cliente').slice(0,80),
             last_name:'EXELARIS'
         };
     }
 
     return {
-        name:partes.slice(0,Math.max(1,partes.length-1)).join(' '),
-        last_name:partes.slice(-1).join(' ')
+        name:partes.slice(0,Math.max(1,partes.length-1)).join(' ').slice(0,80),
+        last_name:partes.slice(-1).join(' ').slice(0,80)
     };
+}
+
+function orderIdOpenpay(compraId){
+    /*
+    Openpay requiere un identificador único por cargo.
+    Lo sanitizamos para evitar caracteres raros.
+    */
+    return limpiarTexto(compraId)
+        .replace(/[^a-zA-Z0-9_-]/g,'')
+        .slice(0,100);
+}
+
+function enmascarar(valor){
+    const texto = limpiarTexto(valor);
+
+    if(texto.length <= 6){
+        return texto ? '***' : '';
+    }
+
+    return `${texto.slice(0,3)}***${texto.slice(-3)}`;
 }
 
 function errorOpenpayTexto(data,status){
@@ -88,20 +137,31 @@ function errorOpenpayTexto(data,status){
         return `Openpay rechazó la operación (${status})`;
     }
 
-    return data.description ||
-           data.message ||
-           data.error_message ||
-           data.error_code ||
-           `Openpay rechazó la operación (${status})`;
+    const codigo = data.error_code ? ` [${data.error_code}]` : '';
+    const descripcion = data.description ||
+                        data.message ||
+                        data.error_message ||
+                        data.error_code ||
+                        `Openpay rechazó la operación (${status})`;
+
+    return `Openpay: ${descripcion}${codigo}`;
 }
 
-async function crearCargoOpenpay({ req, compraId, evento, comprador, totalImporte, openpay }){
-    if(!openpayConfigurado()){
-        throw new Error('Openpay no está configurado. Revisa variables de entorno en Render.');
-    }
+function resumenErrorOpenpay(data,responseStatus){
+    return {
+        httpStatus:responseStatus || data?.http_code || null,
+        http_code:data?.http_code || null,
+        error_code:data?.error_code || null,
+        category:data?.category || null,
+        description:data?.description || data?.message || null,
+        request_id:data?.request_id || null
+    };
+}
 
+function construirCargoOpenpay({ compraId, evento, comprador, totalImporte, openpay }){
     const tokenId = limpiarTexto(openpay?.token_id || openpay?.tokenId || openpay?.source_id || openpay?.sourceId);
     const deviceSessionId = limpiarTexto(openpay?.device_session_id || openpay?.deviceSessionId);
+    const monto = normalizarMonto(totalImporte);
 
     if(!tokenId){
         throw new Error('Falta token_id de Openpay.');
@@ -111,27 +171,66 @@ async function crearCargoOpenpay({ req, compraId, evento, comprador, totalImport
         throw new Error('Falta device_session_id de Openpay.');
     }
 
-    const merchantId = process.env.OPENPAY_MERCHANT_ID;
-    const privateKey = process.env.OPENPAY_PRIVATE_KEY;
-    const baseUrl = openpayBaseUrl();
-
     const nombre = dividirNombre(comprador.nombre);
+    const telefono = limpiarTelefono(comprador.telefono);
 
-    const chargeData = {
-        method:'card',
-        source_id:tokenId,
-        amount:normalizarMonto(totalImporte),
-        currency:'MXN',
-        description:`EXELARIS - ${evento.nombre} - ${compraId}`.slice(0,250),
-        order_id:compraId,
-        device_session_id:deviceSessionId,
-        customer:{
-            name:nombre.name,
-            last_name:nombre.last_name,
-            phone_number:limpiarTexto(comprador.telefono),
-            email:limpiarTexto(comprador.correo)
+    const customer = {
+        name:nombre.name,
+        last_name:nombre.last_name,
+        email:limpiarEmail(comprador.correo)
+    };
+
+    if(telefono){
+        customer.phone_number = telefono;
+    }
+
+    return {
+        chargeData:{
+            method:'card',
+            source_id:tokenId,
+            amount:monto,
+            currency:'MXN',
+            description:`EXELARIS - ${evento.nombre} - ${compraId}`.slice(0,250),
+            order_id:orderIdOpenpay(compraId),
+            device_session_id:deviceSessionId,
+            customer
+        },
+        debug:{
+            sandbox:openpaySandbox(),
+            amount:monto,
+            order_id:orderIdOpenpay(compraId),
+            merchantId:enmascarar(valorEnv('OPENPAY_MERCHANT_ID')),
+            hasToken:Boolean(tokenId),
+            hasDeviceSession:Boolean(deviceSessionId),
+            customerEmail:customer.email,
+            hasPhone:Boolean(telefono)
         }
     };
+}
+
+
+async function crearCargoOpenpay({ req, compraId, evento, comprador, totalImporte, openpay }){
+    if(!openpayConfigurado()){
+        throw new Error('Openpay no está configurado. Revisa variables de entorno en Render.');
+    }
+
+    const merchantId = valorEnv('OPENPAY_MERCHANT_ID');
+    const privateKey = valorEnv('OPENPAY_PRIVATE_KEY');
+    const baseUrl = openpayBaseUrl();
+
+    const { chargeData, debug } = construirCargoOpenpay({
+        compraId,
+        evento,
+        comprador,
+        totalImporte,
+        openpay
+    });
+
+    /*
+    Log seguro: no imprime token, llave privada ni tarjeta.
+    Sirve para diagnosticar Render/Openpay.
+    */
+    console.log('➡️ Openpay charge request:', debug);
 
     const auth = Buffer.from(`${privateKey}:`).toString('base64');
 
@@ -154,18 +253,41 @@ async function crearCargoOpenpay({ req, compraId, evento, comprador, totalImport
     }
 
     if(!response.ok){
+        const resumen = resumenErrorOpenpay(data,response.status);
+
+        console.error('❌ Openpay charge response:', {
+            ...resumen,
+            order_id:chargeData.order_id,
+            amount:chargeData.amount
+        });
+
         const error = new Error(errorOpenpayTexto(data,response.status));
-        error.openpay = data;
+        error.openpay = resumen;
+        error.openpayRaw = data;
         error.httpStatus = response.status;
         throw error;
     }
 
     if(data?.status && data.status !== 'completed'){
+        const resumen = resumenErrorOpenpay(data,402);
+
         const error = new Error(`Pago no completado por Openpay. Estado: ${data.status}`);
-        error.openpay = data;
+        error.openpay = {
+            ...resumen,
+            status:data.status,
+            id:data.id || null
+        };
+        error.openpayRaw = data;
         error.httpStatus = 402;
         throw error;
     }
+
+    console.log('✅ Openpay charge completed:', {
+        id:data?.id || null,
+        status:data?.status || null,
+        amount:data?.amount || chargeData.amount,
+        order_id:chargeData.order_id
+    });
 
     return data;
 }
@@ -397,14 +519,16 @@ router.post('/comprar', async (req,res) => {
             await db.collection('compras').doc(compraId).update({
                 estadoPago:'rechazado',
                 openpayError:errorPago.message,
-                openpayErrorRaw:errorPago.openpay || null,
+                openpayErrorResumen:errorPago.openpay || null,
+                openpayErrorRaw:errorPago.openpayRaw || errorPago.openpay || null,
                 fechaRechazoPago:new Date()
             });
 
             return res.status(errorPago.httpStatus || 402).json({
                 success:false,
                 error:errorPago.message,
-                compraId
+                compraId,
+                openpay:errorPago.openpay || null
             });
         }
 

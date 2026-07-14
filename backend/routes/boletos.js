@@ -301,22 +301,19 @@ function crearOpenpayClient(){
     const privateKey = valorEnv('OPENPAY_PRIVATE_KEY');
 
     /*
-    IMPORTANTE:
-    Algunas versiones de openpay-node usan:
-      new Openpay(merchantId, privateKey, isProduction)
+    Firma oficial de openpay-node:
+    new Openpay(merchantId, privateKey, countryCode, isProductionReady)
 
-    Si se manda 'mx' como tercer parámetro en esas versiones,
-    lo interpreta como true/producción y termina pegando a producción,
-    provocando 401 con credenciales sandbox.
-
-    Por eso aquí usamos 3 parámetros y forzamos modo sandbox/producción
-    con setProductionReady cuando existe.
+    Para México sandbox:
+    countryCode = 'mx'
+    isProductionReady = false
     */
     const productionReady = !openpaySandbox();
 
     const client = new Openpay(
         merchantId,
         privateKey,
+        'mx',
         productionReady
     );
 
@@ -338,6 +335,7 @@ function crearOpenpayClient(){
 
     console.log('🔐 Openpay SDK client mode:', {
         sandbox:openpaySandbox(),
+        country:'mx',
         productionReady
     });
 
@@ -414,15 +412,18 @@ async function crearCargoOpenpay({ req, compraId, evento, comprador, totalImport
         openpay-node puede entregar el error como objeto directo o dentro de body/error/data.
         Normalizamos el error sin imprimir token, llave privada ni tarjeta.
         */
-        const raw = errorSdk.error ||
-                    errorSdk.body ||
-                    errorSdk.data ||
-                    {};
+        const rawSource = errorSdk?.error ||
+                          errorSdk?.body ||
+                          errorSdk?.data ||
+                          errorSdk ||
+                          {};
+
+        const raw = valorSeguroFirestore(rawSource) || {};
 
         const openpayError = openpayErrorSeguro(
             raw,
             response,
-            errorSdk.message
+            errorSdk?.message
         );
 
         console.error('❌ Openpay SDK charge response:', {

@@ -9,14 +9,62 @@
 <style>
 *{box-sizing:border-box}body{font-family:Poppins,sans-serif;background:#030712;color:#E5E7EB}.hero{background:radial-gradient(circle at top left,#7C3AED55,transparent 34%),radial-gradient(circle at bottom right,#2563EB55,transparent 38%),#030712}.glass{background:rgba(15,23,42,.82);border:1px solid rgba(255,255,255,.10);box-shadow:0 24px 80px rgba(0,0,0,.35);backdrop-filter:blur(18px)}.input{width:100%;background:#0F172A;border:1px solid rgba(255,255,255,.12);color:white;outline:none;border-radius:18px;padding:14px 16px;font-weight:700}.input:focus{border-color:#7C3AED;box-shadow:0 0 0 4px rgba(124,58,237,.16)}.label{display:block;color:#CBD5E1;font-size:13px;font-weight:900;margin-bottom:8px}.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:16px;padding:12px 16px;font-weight:900;font-size:14px;text-decoration:none;transition:.2s}.btn-primary{background:linear-gradient(135deg,#7C3AED,#2563EB);color:white}.btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 32px rgba(124,58,237,.28)}.btn-primary:disabled{opacity:.55;cursor:not-allowed}.ticket-card{border-radius:26px;padding:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10)}.counter-btn{width:42px;height:42px;border-radius:14px;background:#EEF2FF;color:#4F46E5;font-size:24px;font-weight:900}.counter-value{min-width:44px;text-align:center;font-size:28px;font-weight:900;color:white}.badge{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900}.badge-green{background:#DCFCE7;color:#166534}.badge-yellow{background:#FEF3C7;color:#92400E}.badge-blue{background:#DBEAFE;color:#1D4ED8}.result{border-radius:22px;background:#ECFDF5;color:#064E3B;border:1px solid #A7F3D0;padding:18px}
 </style>
+<script src="https://js.openpay.mx/openpay.v1.min.js"></script>
+<script src="https://js.openpay.mx/openpay-data.v1.min.js"></script>
 </head>
 <body class="hero min-h-screen">
 <main class="max-w-6xl mx-auto px-5 py-8">
 <header class="mb-8 grid lg:grid-cols-[1fr_320px] gap-6 items-center"><div><div class="text-sm tracking-[.28em] text-purple-300 font-bold">EXELARIS TICKETS</div><h1 id="eventoNombre" class="text-4xl lg:text-6xl font-black text-white mt-2">Cargando evento...</h1><p id="eventoInfo" class="text-slate-300 mt-4 text-lg"></p></div><div id="flyerBox" class="glass rounded-3xl overflow-hidden min-h-[260px] flex items-center justify-center text-slate-400 font-bold">Flyer</div></header>
-<section class="grid lg:grid-cols-[1fr_380px] gap-6"><div class="glass rounded-3xl p-6"><h2 class="text-2xl font-black text-white mb-5">Selecciona tus boletos</h2><div id="categorias" class="grid gap-4 mb-8"></div><h2 class="text-2xl font-black text-white mb-5">Datos del comprador</h2><div class="grid md:grid-cols-3 gap-4 mb-6"><div><label class="label">Nombre</label><input id="nombre" class="input" placeholder="Nombre completo"></div><div><label class="label">Correo</label><input id="correo" class="input" placeholder="correo@email.com"></div><div><label class="label">WhatsApp</label><input id="telefono" class="input" placeholder="9210000000"></div></div><label class="ticket-card flex gap-3 items-start mb-6"><input id="compradorAsistente" type="checkbox" checked onchange="renderAsistentes()" class="mt-1 w-5 h-5 accent-purple-600"><span><strong class="text-white">El comprador usará el primer boleto</strong><small class="block text-slate-400 mt-1">El primer boleto quedará a nombre del comprador.</small></span></label><label class="ticket-card flex gap-3 items-start mb-6"><input id="marketingConsent" type="checkbox" class="mt-1 w-5 h-5 accent-purple-600"><span><strong class="text-white">Deseo recibir información de futuros eventos de EXELARIS</strong><small class="block text-slate-400 mt-1">Puedes recibir promociones, preventas o avisos de próximos eventos. No afecta tu compra.</small></span></label><h2 class="text-2xl font-black text-white mb-5">Asistentes</h2><div id="asistentes" class="grid gap-3 mb-6"></div><button id="btnComprar" onclick="comprar()" class="btn btn-primary w-full">Generar boletos</button></div><aside class="glass rounded-3xl p-6 h-fit sticky top-6"><h2 class="text-2xl font-black text-white mb-5">Resumen</h2><div id="resumen" class="space-y-4"></div><div id="resultado" class="mt-6 space-y-3"></div></aside></section>
+<section class="grid lg:grid-cols-[1fr_380px] gap-6"><div class="glass rounded-3xl p-6"><h2 class="text-2xl font-black text-white mb-5">Selecciona tus boletos</h2><div id="categorias" class="grid gap-4 mb-8"></div><h2 class="text-2xl font-black text-white mb-5">Datos del comprador</h2><div class="grid md:grid-cols-3 gap-4 mb-6"><div><label class="label">Nombre</label><input id="nombre" class="input" placeholder="Nombre completo"></div><div><label class="label">Correo</label><input id="correo" class="input" placeholder="correo@email.com"></div><div><label class="label">WhatsApp</label><input id="telefono" class="input" placeholder="9210000000"></div></div><label class="ticket-card flex gap-3 items-start mb-6"><input id="compradorAsistente" type="checkbox" checked onchange="renderAsistentes()" class="mt-1 w-5 h-5 accent-purple-600"><span><strong class="text-white">El comprador usará el primer boleto</strong><small class="block text-slate-400 mt-1">El primer boleto quedará a nombre del comprador.</small></span></label><label class="ticket-card flex gap-3 items-start mb-6"><input id="marketingConsent" type="checkbox" class="mt-1 w-5 h-5 accent-purple-600"><span><strong class="text-white">Deseo recibir información de futuros eventos de EXELARIS</strong><small class="block text-slate-400 mt-1">Puedes recibir promociones, preventas o avisos de próximos eventos. No afecta tu compra.</small></span></label><h2 class="text-2xl font-black text-white mb-5">Pago con tarjeta</h2>
+<form id="paymentForm" class="ticket-card mb-6" onsubmit="return false;">
+    <input type="hidden" id="device_session_id" name="device_session_id">
+
+    <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <div>
+            <strong class="text-white">Openpay</strong>
+            <small id="openpayStatus" class="block text-slate-400 mt-1">Inicializando pago seguro...</small>
+        </div>
+        <span id="openpayMode" class="badge badge-blue">Sandbox</span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4">
+        <div>
+            <label class="label">Nombre en la tarjeta</label>
+            <input id="card_holder" class="input" placeholder="Como aparece en la tarjeta" autocomplete="cc-name">
+        </div>
+
+        <div>
+            <label class="label">Número de tarjeta</label>
+            <input id="card_number" class="input" placeholder="0000 0000 0000 0000" inputmode="numeric" autocomplete="cc-number" maxlength="19">
+        </div>
+
+        <div>
+            <label class="label">Mes expiración</label>
+            <input id="card_month" class="input" placeholder="MM" inputmode="numeric" autocomplete="cc-exp-month" maxlength="2">
+        </div>
+
+        <div>
+            <label class="label">Año expiración</label>
+            <input id="card_year" class="input" placeholder="AA" inputmode="numeric" autocomplete="cc-exp-year" maxlength="2">
+        </div>
+
+        <div>
+            <label class="label">CVV</label>
+            <input id="card_cvv" class="input" placeholder="123" inputmode="numeric" autocomplete="cc-csc" maxlength="4">
+        </div>
+
+        <div class="flex items-end">
+            <div class="text-slate-400 text-sm font-bold">
+                Los datos de tarjeta se tokenizan con Openpay y no pasan por tu servidor.
+            </div>
+        </div>
+    </div>
+</form>
+
+<h2 class="text-2xl font-black text-white mb-5">Asistentes</h2><div id="asistentes" class="grid gap-3 mb-6"></div><button id="btnComprar" onclick="comprar()" class="btn btn-primary w-full">Pagar y generar boletos</button></div><aside class="glass rounded-3xl p-6 h-fit sticky top-6"><h2 class="text-2xl font-black text-white mb-5">Resumen</h2><div id="resumen" class="space-y-4"></div><div id="resultado" class="mt-6 space-y-3"></div></aside></section>
 </main>
 <script>
-const API='https://fiestaretro-api.onrender.com';let config=null,cantidades={},asistentes=[];function dinero(v){return Number(v||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0})}function esc(t){return String(t||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;")}function esGrupo(c){return c.tipoVenta==='grupo'||Number(c.boletosPorUnidad)>1}function getCats(){return config?.categorias||[]}async function cargar(){try{const r=await fetch(`${API}/api/boletos/config`),d=await r.json();if(!d.success)throw new Error(d.error);config=d;getCats().forEach(c=>cantidades[c.id]=0);document.getElementById('eventoNombre').textContent=d.evento.nombre;document.getElementById('eventoInfo').textContent=`${d.evento.fecha||''} · ${d.evento.hora||''} · ${d.evento.lugar||''} · ${d.evento.ciudad||''}`;if(d.evento.flyer){document.getElementById('flyerBox').innerHTML=`<img src="${d.evento.flyer}" class="w-full h-full object-cover">`;}renderCategorias();renderResumen();renderAsistentes();}catch(e){document.getElementById('eventoNombre').textContent=e.message}}
+const API='https://fiestaretro-api.onrender.com';let config=null,cantidades={},asistentes=[];function dinero(v){return Number(v||0).toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0})}function esc(t){return String(t||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;")}function esGrupo(c){return c.tipoVenta==='grupo'||Number(c.boletosPorUnidad)>1}function getCats(){return config?.categorias||[]}async function cargar(){try{const r=await fetch(`${API}/api/boletos/config`),d=await r.json();if(!d.success)throw new Error(d.error);config=d;getCats().forEach(c=>cantidades[c.id]=0);document.getElementById('eventoNombre').textContent=d.evento.nombre;document.getElementById('eventoInfo').textContent=`${d.evento.fecha||''} · ${d.evento.hora||''} · ${d.evento.lugar||''} · ${d.evento.ciudad||''}`;if(d.evento.flyer){document.getElementById('flyerBox').innerHTML=`<img src="${d.evento.flyer}" class="w-full h-full object-cover">`;}renderCategorias();renderResumen();renderAsistentes();inicializarOpenpay();}catch(e){document.getElementById('eventoNombre').textContent=e.message}}
 function esGeneral(c){
     return String(c.id || '').toLowerCase() === 'general' ||
            String(c.nombre || '').toLowerCase().includes('general');
@@ -137,8 +185,199 @@ function cambiar(id,delta){
 function generarSlots(){const slots=[];getCats().forEach(c=>{const cant=Number(cantidades[c.id]||0);if(cant<=0)return;if(esGrupo(c)){for(let u=1;u<=cant;u++){for(let p=1;p<=Number(c.boletosPorUnidad||1);p++){slots.push({categoriaId:c.id,categoriaNombre:c.nombre,label:`${c.nombre} · ${c.unidad} ${u} · Lugar ${p}/${c.boletosPorUnidad}`})}}}else{for(let i=1;i<=cant;i++)slots.push({categoriaId:c.id,categoriaNombre:c.nombre,label:`${c.nombre} · Boleto ${i}`})}});return slots}
 function renderResumen(){const slots=generarSlots();let total=0,rows=[];getCats().forEach(c=>{const cant=Number(cantidades[c.id]||0);if(cant<=0)return;const boletos=esGrupo(c)?cant*Number(c.boletosPorUnidad||1):cant,importe=boletos*Number(c.precio||0);total+=importe;rows.push(`<div class="flex justify-between border-b border-white/10 pb-3"><span class="text-slate-400">${esc(c.nombre)} ${esGrupo(c)?`(${cant} ${esc(c.unidad)})`:''}</span><strong class="text-white">${boletos} · ${dinero(importe)}</strong></div>`)});document.getElementById('resumen').innerHTML=(rows.join('')||'<div class="text-slate-400 font-bold">Sin boletos seleccionados.</div>')+`<div class="flex justify-between text-2xl pt-2"><span class="font-black text-white">Total</span><strong class="text-purple-300">${dinero(total)}</strong></div><div class="text-slate-400 font-bold">Boletos: ${slots.length}</div>`}
 function renderAsistentes(){const cont=document.getElementById('asistentes'),slots=generarSlots(),comprador=document.getElementById('nombre').value.trim(),usar=document.getElementById('compradorAsistente').checked;if(slots.length===0){cont.innerHTML='<div class="text-slate-400 font-bold">Selecciona boletos para capturar asistentes.</div>';asistentes=[];return}asistentes=slots.map((s,i)=>{const previo=asistentes[i]||{};return{slot:s,nombre:i===0&&usar?comprador:(previo.nombre||''),bloqueado:i===0&&usar}});cont.innerHTML=asistentes.map((a,i)=>`<div class="ticket-card"><label class="label">${esc(a.slot.label)}</label><input class="input" ${a.bloqueado?'disabled':''} value="${esc(a.nombre)}" placeholder="${a.bloqueado?'Se usará el nombre del comprador':'Nombre del asistente'}" oninput="asistentes[${i}].nombre=this.value.trim()">${a.bloqueado?'<div class="text-green-300 text-sm font-bold mt-2">Este boleto queda a nombre del comprador.</div>':''}</div>`).join('')}
-document.addEventListener('input',e=>{if(e.target.id==='nombre')renderAsistentes()});function payload(){const aceptaMarketing=document.getElementById('marketingConsent')?.checked||false;return{comprador:{nombre:document.getElementById('nombre').value.trim(),correo:document.getElementById('correo').value.trim(),telefono:document.getElementById('telefono').value.trim(),marketingConsent:aceptaMarketing},marketingConsent:aceptaMarketing,aceptaMarketing:aceptaMarketing,seleccion:getCats().map(c=>({categoriaId:c.id,cantidad:Number(cantidades[c.id]||0)})).filter(x=>x.cantidad>0),asistentes:asistentes.map(a=>({nombre:a.nombre||document.getElementById('nombre').value.trim()}))}}
-async function comprar(){const p=payload();if(!p.comprador.nombre){alert('Captura nombre');return}if(!p.comprador.correo){alert('Captura correo');return}if(p.seleccion.length===0){alert('Selecciona boletos');return}const btn=document.getElementById('btnComprar'),out=document.getElementById('resultado');try{btn.disabled=true;btn.textContent='Generando boletos...';out.innerHTML='';const r=await fetch(`${API}/api/boletos/comprar`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}),d=await r.json();if(!d.success)throw new Error(d.error);out.innerHTML=`<div class="result"><div class="font-black text-lg">Compra generada</div><div>Compra: <strong>${esc(d.compraId)}</strong></div><div>Total: <strong>${dinero(d.total)}</strong></div><div>Correo: <strong>${d.correo?.enviado?'Enviado':'Pendiente'}</strong></div></div>`+d.boletos.map(b=>`<div class="result"><strong>${esc(b.folio)}</strong> · ${esc(b.categoriaNombre)}<br><small>${esc(b.nombre)}</small><div class="mt-3"><a class="btn btn-primary" target="_blank" href="${b.pdfUrl}">Abrir PDF</a></div></div>`).join('');await cargar();}catch(e){alert(e.message)}finally{btn.disabled=false;btn.textContent='Generar boletos'}}cargar();
+
+document.addEventListener('input',e=>{
+    if(e.target.id==='nombre')renderAsistentes();
+
+    if(['card_number','card_month','card_year','card_cvv'].includes(e.target.id)){
+        e.target.value=e.target.value.replace(/\D/g,'');
+    }
+
+    if(e.target.id==='card_number'){
+        e.target.value=e.target.value.replace(/(.{4})/g,'$1 ').trim().slice(0,19);
+    }
+});
+
+let deviceSessionId='';
+
+function inicializarOpenpay(){
+    const op=config?.openpay;
+
+    const status=document.getElementById('openpayStatus');
+    const mode=document.getElementById('openpayMode');
+
+    if(!op || !op.enabled){
+        if(status)status.textContent='Openpay no está configurado en el backend.';
+        if(mode)mode.textContent='Sin configurar';
+        return;
+    }
+
+    if(typeof OpenPay==='undefined'){
+        if(status)status.textContent='No se pudo cargar Openpay.js. Revisa conexión o bloqueadores.';
+        return;
+    }
+
+    try{
+        OpenPay.setId(op.merchantId);
+        OpenPay.setApiKey(op.publicKey);
+        OpenPay.setSandboxMode(Boolean(op.sandbox));
+
+        deviceSessionId=OpenPay.deviceData.setup('paymentForm','device_session_id');
+
+        if(status)status.textContent='Pago seguro listo.';
+        if(mode)mode.textContent=op.sandbox?'Sandbox':'Producción';
+    }catch(error){
+        console.error(error);
+        if(status)status.textContent='Error inicializando Openpay: '+error.message;
+    }
+}
+
+function valor(id){
+    return document.getElementById(id)?.value.trim() || '';
+}
+
+function limpiarTarjeta(numero){
+    return String(numero || '').replace(/\D/g,'');
+}
+
+function errorOpenpay(error){
+    const data=error?.data || error || {};
+    return data.description || data.message || data.error_message || 'No se pudo tokenizar la tarjeta';
+}
+
+function crearTokenOpenpay(){
+    return new Promise((resolve,reject)=>{
+        const op=config?.openpay;
+
+        if(!op || !op.enabled){
+            reject(new Error('Openpay no está configurado. Agrega credenciales en Render.'));
+            return;
+        }
+
+        if(typeof OpenPay==='undefined'){
+            reject(new Error('Openpay.js no está disponible.'));
+            return;
+        }
+
+        const holder=valor('card_holder');
+        const number=limpiarTarjeta(valor('card_number'));
+        const month=valor('card_month').padStart(2,'0');
+        const year=valor('card_year');
+        const cvv=valor('card_cvv');
+
+        if(!holder || !number || !month || !year || !cvv){
+            reject(new Error('Captura todos los datos de la tarjeta.'));
+            return;
+        }
+
+        if(number.length < 13){
+            reject(new Error('Número de tarjeta inválido.'));
+            return;
+        }
+
+        if(month.length !== 2 || Number(month) < 1 || Number(month) > 12){
+            reject(new Error('Mes de expiración inválido.'));
+            return;
+        }
+
+        if(year.length !== 2 && year.length !== 4){
+            reject(new Error('Año de expiración inválido.'));
+            return;
+        }
+
+        OpenPay.token.create({
+            holder_name:holder,
+            card_number:number,
+            cvv2:cvv,
+            expiration_month:month,
+            expiration_year:year.slice(-2)
+        },function(response){
+            const tokenId=response?.data?.id;
+
+            if(!tokenId){
+                reject(new Error('Openpay no regresó token de tarjeta.'));
+                return;
+            }
+
+            resolve(tokenId);
+        },function(error){
+            reject(new Error(errorOpenpay(error)));
+        });
+    });
+}
+
+function payload(){const aceptaMarketing=document.getElementById('marketingConsent')?.checked||false;return{comprador:{nombre:document.getElementById('nombre').value.trim(),correo:document.getElementById('correo').value.trim(),telefono:document.getElementById('telefono').value.trim(),marketingConsent:aceptaMarketing},marketingConsent:aceptaMarketing,aceptaMarketing:aceptaMarketing,seleccion:getCats().map(c=>({categoriaId:c.id,cantidad:Number(cantidades[c.id]||0)})).filter(x=>x.cantidad>0),asistentes:asistentes.map(a=>({nombre:a.nombre||document.getElementById('nombre').value.trim()}))}}
+async function comprar(){
+    const p=payload();
+
+    if(!p.comprador.nombre){
+        alert('Captura nombre');
+        return;
+    }
+
+    if(!p.comprador.correo){
+        alert('Captura correo');
+        return;
+    }
+
+    if(p.seleccion.length===0){
+        alert('Selecciona boletos');
+        return;
+    }
+
+    const btn=document.getElementById('btnComprar');
+    const out=document.getElementById('resultado');
+
+    try{
+        btn.disabled=true;
+        btn.textContent='Validando tarjeta...';
+        out.innerHTML='';
+
+        const tokenId=await crearTokenOpenpay();
+        const deviceId=document.getElementById('device_session_id')?.value || deviceSessionId || '';
+
+        if(!deviceId){
+            throw new Error('No se generó device_session_id de Openpay.');
+        }
+
+        p.openpay={
+            token_id:tokenId,
+            device_session_id:deviceId
+        };
+
+        btn.textContent='Procesando pago...';
+
+        const r=await fetch(`${API}/api/boletos/comprar`,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(p)
+        });
+
+        const d=await r.json();
+
+        if(!d.success){
+            throw new Error(d.error);
+        }
+
+        out.innerHTML=`<div class="result"><div class="font-black text-lg">Pago aprobado y compra generada</div><div>Compra: <strong>${esc(d.compraId)}</strong></div><div>Total: <strong>${dinero(d.total)}</strong></div><div>Pago: <strong>${esc(d.pago?.status || 'aprobado')}</strong></div><div>Correo: <strong>${d.correo?.enviado?'Enviado':'Pendiente'}</strong></div></div>`+
+            d.boletos.map(b=>`<div class="result"><strong>${esc(b.folio)}</strong> · ${esc(b.categoriaNombre)}<br><small>${esc(b.nombre)}</small><div class="mt-3"><a class="btn btn-primary" target="_blank" href="${b.pdfUrl}">Abrir PDF</a></div></div>`).join('');
+
+        ['card_holder','card_number','card_month','card_year','card_cvv'].forEach(id=>{
+            const el=document.getElementById(id);
+            if(el)el.value='';
+        });
+
+        await cargar();
+
+    }catch(e){
+        alert(e.message);
+    }finally{
+        btn.disabled=false;
+        btn.textContent='Pagar y generar boletos';
+    }
+}
+
+cargar();
 </script>
 </body>
 </html>

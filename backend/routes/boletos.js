@@ -159,6 +159,91 @@ function resumenErrorOpenpay(data,responseStatus){
     };
 }
 
+function valorSeguroFirestore(valor){
+    if(valor === undefined){
+        return null;
+    }
+
+    if(valor === null){
+        return null;
+    }
+
+    if(
+        typeof valor === 'string' ||
+        typeof valor === 'number' ||
+        typeof valor === 'boolean'
+    ){
+        return valor;
+    }
+
+    if(valor instanceof Date){
+        return valor;
+    }
+
+    if(Array.isArray(valor)){
+        return valor.map(item => valorSeguroFirestore(item));
+    }
+
+    if(valor instanceof Error){
+        return {
+            name:valor.name || 'Error',
+            message:valor.message || '',
+            stack:valor.stack ? String(valor.stack).slice(0,2000) : ''
+        };
+    }
+
+    /*
+    Evita guardar IncomingMessage, ClientRequest, Socket u objetos del SDK
+    que Firestore no puede serializar.
+    */
+    if(typeof valor === 'object'){
+        const proto = Object.getPrototypeOf(valor);
+
+        if(proto && proto !== Object.prototype){
+            return {
+                type:valor.constructor?.name || 'Object',
+                statusCode:valor.statusCode || null,
+                statusMessage:valor.statusMessage || null
+            };
+        }
+
+        const salida = {};
+
+        for(const [clave,item] of Object.entries(valor)){
+            if(typeof item === 'function' || typeof item === 'symbol'){
+                continue;
+            }
+
+            if(clave === 'response' || clave === 'request' || clave === 'req' || clave === 'socket' || clave === 'client'){
+                salida[clave] = {
+                    type:item?.constructor?.name || 'Object',
+                    statusCode:item?.statusCode || null,
+                    statusMessage:item?.statusMessage || null
+                };
+                continue;
+            }
+
+            salida[clave] = valorSeguroFirestore(item);
+        }
+
+        return salida;
+    }
+
+    return String(valor);
+}
+
+function openpayErrorSeguro(raw, response, fallbackMessage){
+    return {
+        httpStatus:Number(raw?.httpStatus || raw?.http_code || response?.statusCode || response?.status || 500),
+        http_code:Number(raw?.http_code || raw?.httpStatus || response?.statusCode || response?.status || 500),
+        error_code:raw?.error_code || raw?.errorCode || null,
+        category:raw?.category || null,
+        description:raw?.description || raw?.message || fallbackMessage || 'Openpay rechazó la operación',
+        request_id:raw?.request_id || raw?.requestId || null
+    };
+}
+
+
 function construirCargoOpenpay({ compraId, evento, comprador, totalImporte, openpay }){
     const tokenId = limpiarTexto(openpay?.token_id || openpay?.tokenId || openpay?.source_id || openpay?.sourceId);
     const deviceSessionId = limpiarTexto(openpay?.device_session_id || openpay?.deviceSessionId);
@@ -309,17 +394,13 @@ async function crearCargoOpenpay({ req, compraId, evento, comprador, totalImport
         const raw = errorSdk.error ||
                     errorSdk.body ||
                     errorSdk.data ||
-                    errorSdk ||
                     {};
 
-        const openpayError = {
-            httpStatus:raw.httpStatus || raw.http_code || response?.statusCode || response?.status || 500,
-            http_code:raw.http_code || raw.httpStatus || response?.statusCode || response?.status || 500,
-            error_code:raw.error_code || raw.errorCode || null,
-            category:raw.category || null,
-            description:raw.description || raw.message || errorSdk.message || 'Openpay rechazó la operación',
-            request_id:raw.request_id || raw.requestId || null
-        };
+        const openpayError = openpayErrorSeguro(
+            raw,
+            response,
+            errorSdk.message
+        );
 
         console.error('❌ Openpay SDK charge response:', {
             ...openpayError,
@@ -332,7 +413,7 @@ async function crearCargoOpenpay({ req, compraId, evento, comprador, totalImport
         );
 
         error.openpay = openpayError;
-        error.openpayRaw = raw;
+        error.openpayRaw = valorSeguroFirestore(openpayError);
         error.httpStatus = Number(openpayError.httpStatus || openpayError.http_code || 402);
 
         throw error;
@@ -567,8 +648,8 @@ router.post('/comprar', async (req,res) => {
             await db.collection('compras').doc(compraId).update({
                 estadoPago:'rechazado',
                 openpayError:errorPago.message,
-                openpayErrorResumen:errorPago.openpay || null,
-                openpayErrorRaw:errorPago.openpayRaw || errorPago.openpay || null,
+                openpayErrorResumen:valorSeguroFirestore(errorPago.openpay) || null,
+                openpayErrorRaw:valorSeguroFirestore(errorPago.openpayRaw || errorPago.openpay) || null,
                 fechaRechazoPago:new Date()
             });
 

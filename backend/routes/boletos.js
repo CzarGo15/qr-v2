@@ -8,6 +8,7 @@ Módulo: Venta pública con categorías dinámicas
 
 const express = require('express');
 const admin = require('firebase-admin');
+const Openpay = require('openpay');
 const enviarCompraPorCorreo = require('../services/email');
 
 const {
@@ -209,14 +210,52 @@ function construirCargoOpenpay({ compraId, evento, comprador, totalImporte, open
 }
 
 
+
+function crearOpenpayClient(){
+    const merchantId = valorEnv('OPENPAY_MERCHANT_ID');
+    const privateKey = valorEnv('OPENPAY_PRIVATE_KEY');
+
+    /*
+    openpay-node:
+    false = sandbox
+    true  = producción
+    */
+    const productionReady = !openpaySandbox();
+
+    const client = new Openpay(
+        merchantId,
+        privateKey,
+        'mx',
+        productionReady
+    );
+
+    if(typeof client.setTimeout === 'function'){
+        client.setTimeout(30000);
+    }
+
+    return client;
+}
+
+function crearCargoOpenpaySDK(client, chargeData){
+    return new Promise((resolve,reject) => {
+        client.charges.create(chargeData, function(error, body, response){
+            if(error){
+                error.response = response || null;
+                return reject(error);
+            }
+
+            return resolve({
+                body,
+                response
+            });
+        });
+    });
+}
+
 async function crearCargoOpenpay({ req, compraId, evento, comprador, totalImporte, openpay }){
     if(!openpayConfigurado()){
         throw new Error('Openpay no está configurado. Revisa variables de entorno en Render.');
     }
-
-    const merchantId = valorEnv('OPENPAY_MERCHANT_ID');
-    const privateKey = valorEnv('OPENPAY_PRIVATE_KEY');
-    const baseUrl = openpayBaseUrl();
 
     const { chargeData, debug } = construirCargoOpenpay({
         compraId,
@@ -228,69 +267,78 @@ async function crearCargoOpenpay({ req, compraId, evento, comprador, totalImport
 
     /*
     Log seguro: no imprime token, llave privada ni tarjeta.
-    Sirve para diagnosticar Render/Openpay.
+    Si ves este mensaje en Render, ya estás usando el SDK oficial.
     */
-    console.log('➡️ Openpay charge request:', debug);
+    console.log('➡️ Openpay SDK charge request:', debug);
 
-    const auth = Buffer.from(`${privateKey}:`).toString('base64');
-
-    const response = await fetch(`${baseUrl}/v1/${merchantId}/charges`,{
-        method:'POST',
-        headers:{
-            'Authorization':`Basic ${auth}`,
-            'Content-Type':'application/json'
-        },
-        body:JSON.stringify(chargeData)
-    });
-
-    const text = await response.text();
-    let data = null;
+    const client = crearOpenpayClient();
 
     try{
-        data = text ? JSON.parse(text) : null;
-    }catch(parseError){
-        data = { raw:text };
-    }
+        const { body, response } = await crearCargoOpenpaySDK(client, chargeData);
 
-    if(!response.ok){
-        const resumen = resumenErrorOpenpay(data,response.status);
+        console.log('✅ Openpay SDK charge completed:', {
+            id:body?.id || null,
+            status:body?.status || null,
+            authorization:body?.authorization || null,
+            amount:body?.amount || chargeData.amount,
+            order_id:body?.order_id || chargeData.order_id,
+            statusCode:response?.statusCode || response?.status || null
+        });
 
-        console.error('❌ Openpay charge response:', {
-            ...resumen,
+        if(body?.status && body.status !== 'completed'){
+            const error = new Error(`Pago no completado por Openpay. Estado: ${body.status}`);
+            error.openpay = {
+                status:body.status,
+                id:body.id || null,
+                request_id:body.request_id || null
+            };
+            error.openpayRaw = body;
+            error.httpStatus = 402;
+            throw error;
+        }
+
+        return body;
+
+    }catch(errorSdk){
+        const response = errorSdk.response || null;
+
+        /*
+        openpay-node puede entregar el error como objeto directo o dentro de body/error/data.
+        Normalizamos el error sin imprimir token, llave privada ni tarjeta.
+        */
+        const raw = errorSdk.error ||
+                    errorSdk.body ||
+                    errorSdk.data ||
+                    errorSdk ||
+                    {};
+
+        const openpayError = {
+            httpStatus:raw.httpStatus || raw.http_code || response?.statusCode || response?.status || 500,
+            http_code:raw.http_code || raw.httpStatus || response?.statusCode || response?.status || 500,
+            error_code:raw.error_code || raw.errorCode || null,
+            category:raw.category || null,
+            description:raw.description || raw.message || errorSdk.message || 'Openpay rechazó la operación',
+            request_id:raw.request_id || raw.requestId || null
+        };
+
+        console.error('❌ Openpay SDK charge response:', {
+            ...openpayError,
             order_id:chargeData.order_id,
             amount:chargeData.amount
         });
 
-        const error = new Error(errorOpenpayTexto(data,response.status));
-        error.openpay = resumen;
-        error.openpayRaw = data;
-        error.httpStatus = response.status;
+        const error = new Error(
+            `Openpay: ${openpayError.description}${openpayError.error_code ? ` [${openpayError.error_code}]` : ''}`
+        );
+
+        error.openpay = openpayError;
+        error.openpayRaw = raw;
+        error.httpStatus = Number(openpayError.httpStatus || openpayError.http_code || 402);
+
         throw error;
     }
-
-    if(data?.status && data.status !== 'completed'){
-        const resumen = resumenErrorOpenpay(data,402);
-
-        const error = new Error(`Pago no completado por Openpay. Estado: ${data.status}`);
-        error.openpay = {
-            ...resumen,
-            status:data.status,
-            id:data.id || null
-        };
-        error.openpayRaw = data;
-        error.httpStatus = 402;
-        throw error;
-    }
-
-    console.log('✅ Openpay charge completed:', {
-        id:data?.id || null,
-        status:data?.status || null,
-        amount:data?.amount || chargeData.amount,
-        order_id:chargeData.order_id
-    });
-
-    return data;
 }
+
 
 async function liberarInventario(eventoId,detalleSeleccion){
     const eventoRef = db.collection('eventos').doc(eventoId);
